@@ -259,26 +259,37 @@
         </div>
 
         <div class="form-group">
-            <label for="gitHost">Git 主机地址: <span id="hostCounter" style="font-size: 0.9em; color: #666;">(0/100)</span></label>
-            <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="100" oninput="updateHostCounter()">
-            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 60，最多100字符</div>
+            <label for="gitHost">Git 主机地址:</label>
+            <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="50" oninput="validateHostInput(this)">
+            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30，最多50字符（Git URL总长度限制72字符，固定部分26字符，超出时将无法继续输入）</div>
         </div>
 
         <div class="form-group">
-            <label for="username">用户名: <span id="usernameCounter" style="font-size: 0.9em; color: #666;">(0/55)</span></label>
-            <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="55" oninput="updateUsernameCounter()">
-            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">AGNOS最多55字符，NEOS最多200字符</div>
+            <label for="username">用户名:</label>
+            <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="30" oninput="validateUsernameInput(this)">
+            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20，最多30字符（Git URL总长度限制72字符，固定部分26字符，超出时将无法继续输入）</div>
+        </div>
+
+        <!-- Git URL预览 -->
+        <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
+            <label style="font-weight: bold; color: #495057;">🔗 Git URL预览:</label>
+            <div id="gitUrlPreview" style="font-family: monospace; background: white; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; margin-top: 8px; word-break: break-all;">
+                https://github.com/commaai/openpilot.git
+            </div>
+            <div id="gitUrlCounter" style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                长度: <span id="gitUrlLength">0</span>/72 字符
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="branch">分支名: <span id="branchCounter" style="font-size: 0.9em; color: #666;">(0/32)</span></label>
-            <input type="text" id="branch" placeholder="例如: master, release" maxlength="32" oninput="updateBranchCounter()">
-            <div id="branchHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议 ≤ 24 字符，最多32字符</div>
+            <label for="branch">分支名: <span id="branchCounter" style="font-size: 0.9em; color: #666;">(0/20)</span></label>
+                <input type="text" id="branch" placeholder="例如: master, release" maxlength="20" oninput="updateBranchCounter()">
+            <div id="branchHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议 ≤ 16 字符，最多20字符</div>
         </div>
 
         <div class="form-group">
-            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/25)</span></label>
-            <input type="text" id="loadingMsg" placeholder="例如: Installing openpilot" maxlength="25" 
+            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/39)</span></label>
+                            <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="39" 
                    oninput="updateLoadingCounter()" style="position: relative;">
             <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
                 建议使用15-20个字符的简短消息
@@ -365,121 +376,70 @@
             const counter = document.getElementById('loadingCounter');
             const hint = document.getElementById('loadingHint');
             
+            // 计算实际长度（不包含Installing前缀）
             const currentLength = loadingInput.value.length;
-            const maxLength = 25;
+            // 两个系统都限制39字符
+            const maxLength = 39;
             
             // 更新计数器
             counter.textContent = `(${currentLength}/${maxLength})`;
             
             // 根据长度设置颜色和提示
+            const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
+            const systemLimit = 39; // 两个系统都支持39字符
+            
             if (currentLength === 0) {
                 counter.style.color = '#666';
-                hint.textContent = '建议使用15-20个字符的简短消息';
+                hint.textContent = `建议使用15-20个字符的简短消息（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
                 hint.style.color = '#666';
                 loadingInput.style.borderColor = '#ddd';
             } else if (currentLength <= 15) {
                 counter.style.color = '#28a745';
-                hint.textContent = '✅ 长度理想，不会被截断';
+                hint.textContent = `✅ 长度理想，不会被截断（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
                 hint.style.color = '#28a745';
                 loadingInput.style.borderColor = '#28a745';
             } else if (currentLength <= 20) {
                 counter.style.color = '#17a2b8';
-                hint.textContent = '✅ 长度合适，安全范围内';
+                hint.textContent = `✅ 长度合适，安全范围内（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
                 hint.style.color = '#17a2b8';
                 loadingInput.style.borderColor = '#17a2b8';
-            } else if (currentLength <= 23) {
+            } else if (currentLength <= (systemLimit * 0.8)) {
                 counter.style.color = '#ffc107';
-                hint.textContent = '⚠️ 长度偏长，建议缩短';
+                hint.textContent = `⚠️ 长度偏长，建议缩短（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
                 hint.style.color = '#ffc107';
                 loadingInput.style.borderColor = '#ffc107';
-            } else if (currentLength <= 25) {
+            } else if (currentLength <= systemLimit) {
                 counter.style.color = '#fd7e14';
-                hint.textContent = '⚠️ 接近上限，可能在某些文件中被截断';
+                hint.textContent = `⚠️ 接近上限，可能在某些文件中被截断（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
                 hint.style.color = '#fd7e14';
                 loadingInput.style.borderColor = '#fd7e14';
             }
         }
 
-        function updateHostCounter() {
-            const input = document.getElementById('gitHost');
-            const counter = document.getElementById('hostCounter');
-            const hint = document.getElementById('hostHint');
-            const len = input.value.length;
-            const max = parseInt(input.maxLength || '100', 10);
-            counter.textContent = `(${len}/${max})`;
-            if (len === 0) {
-                counter.style.color = '#666';
-                hint.style.color = '#666';
-                input.style.borderColor = '#ddd';
-            } else if (len <= 60) {
-                counter.style.color = '#28a745';
-                hint.style.color = '#28a745';
-                input.style.borderColor = '#28a745';
-            } else if (len <= 80) {
-                counter.style.color = '#17a2b8';
-                hint.style.color = '#17a2b8';
-                input.style.borderColor = '#17a2b8';
-            } else if (len <= 90) {
-                counter.style.color = '#ffc107';
-                hint.style.color = '#ffc107';
-                input.style.borderColor = '#ffc107';
-            } else {
-                counter.style.color = '#fd7e14';
-                hint.style.color = '#fd7e14';
-                input.style.borderColor = '#fd7e14';
-            }
-        }
 
-        function updateUsernameCounter() {
-            const input = document.getElementById('username');
-            const counter = document.getElementById('usernameCounter');
-            const hint = document.getElementById('usernameHint');
-            const len = input.value.length;
-            const max = parseInt(input.maxLength || (currentIsNeos ? '200' : '55'), 10);
-            counter.textContent = `(${len}/${max})`;
-            if (len === 0) {
-                counter.style.color = '#666';
-                hint.style.color = '#666';
-                input.style.borderColor = '#ddd';
-            } else if (len <= Math.min(20, max * 0.3)) {
-                counter.style.color = '#28a745';
-                hint.style.color = '#28a745';
-                input.style.borderColor = '#28a745';
-            } else if (len <= Math.min(40, max * 0.6)) {
-                counter.style.color = '#17a2b8';
-                hint.style.color = '#17a2b8';
-                input.style.borderColor = '#17a2b8';
-            } else if (len <= max * 0.85) {
-                counter.style.color = '#ffc107';
-                hint.style.color = '#ffc107';
-                input.style.borderColor = '#ffc107';
-            } else {
-                counter.style.color = '#fd7e14';
-                hint.style.color = '#fd7e14';
-                input.style.borderColor = '#fd7e14';
-            }
-        }
+
+
 
         function updateBranchCounter() {
             const input = document.getElementById('branch');
             const counter = document.getElementById('branchCounter');
             const hint = document.getElementById('branchHint');
             const len = input.value.length;
-            const max = parseInt(input.maxLength || '32', 10);
+            const max = parseInt(input.maxLength || '20', 10);
             counter.textContent = `(${len}/${max})`;
             if (len === 0) {
                 counter.style.color = '#666';
                 hint.style.color = '#666';
                 input.style.borderColor = '#ddd';
-            } else if (len <= 16) {
+            } else if (len <= 12) {
                 counter.style.color = '#28a745';
                 hint.style.color = '#28a745';
                 input.style.borderColor = '#28a745';
-            } else if (len <= 24) {
+            } else if (len <= 16) {
                 counter.style.color = '#17a2b8';
                 hint.style.color = '#17a2b8';
                 input.style.borderColor = '#17a2b8';
-            } else if (len <= 30) {
+            } else if (len <= 18) {
                 counter.style.color = '#ffc107';
                 hint.style.color = '#ffc107';
                 input.style.borderColor = '#ffc107';
@@ -487,6 +447,116 @@
                 counter.style.color = '#fd7e14';
                 hint.style.color = '#fd7e14';
                 input.style.borderColor = '#fd7e14';
+            }
+        }
+
+        // 验证主机地址输入
+        function validateHostInput(inputElement) {
+            const username = document.getElementById('username').value || 'commaai';
+            const currentValue = inputElement.value;
+            
+            // 验证长度
+            if (!validateInputLength(inputElement, currentValue, username, 'host')) {
+                return;
+            }
+            
+            // 更新Git URL预览
+            updateGitUrlPreview();
+        }
+
+        // 验证用户名输入
+        function validateUsernameInput(inputElement) {
+            const host = document.getElementById('gitHost').value || 'github.com';
+            const currentValue = inputElement.value;
+            
+            // 验证长度
+            if (!validateInputLength(inputElement, currentValue, host, 'username')) {
+                return;
+            }
+            
+            // 更新Git URL预览
+            updateGitUrlPreview();
+        }
+
+        // 验证输入长度并阻止超长输入
+        function validateInputLength(inputElement, currentValue, otherValue, fieldType) {
+            const FIXED_PREFIX = 'https://';
+            const FIXED_SUFFIX = '/openpilot.git';
+            const FIXED_LENGTH = FIXED_PREFIX.length + 1 + FIXED_SUFFIX.length; // 26字符 (包含中间的/)
+            
+            // 计算当前字段的最大可用长度
+            const maxLength = 72 - FIXED_LENGTH - otherValue.length;
+            
+            if (maxLength <= 0) {
+                // 如果无法继续输入，阻止输入
+                inputElement.value = currentValue.substring(0, currentValue.length - 1);
+                return false;
+            }
+            
+            // 如果当前输入超过最大长度，截断到最大长度
+            if (currentValue.length > maxLength) {
+                inputElement.value = currentValue.substring(0, maxLength);
+                return false;
+            }
+            
+            return true;
+        }
+
+        // 更新Git URL预览
+        function updateGitUrlPreview() {
+            const hostInput = document.getElementById('gitHost');
+            const usernameInput = document.getElementById('username');
+            const host = hostInput.value || 'github.com';
+            const username = usernameInput.value || 'commaai';
+            const gitUrl = `https://${host}/${username}/openpilot.git`;
+            const gitUrlLength = gitUrl.length;
+            
+            // 更新预览内容
+            document.getElementById('gitUrlPreview').textContent = gitUrl;
+            document.getElementById('gitUrlLength').textContent = gitUrlLength;
+            
+            // 根据长度设置颜色
+            const counter = document.getElementById('gitUrlLength');
+            if (gitUrlLength <= 50) {
+                counter.style.color = '#28a745'; // 绿色
+            } else if (gitUrlLength <= 65) {
+                counter.style.color = '#17a2b8'; // 蓝色
+            } else if (gitUrlLength <= 72) {
+                counter.style.color = '#ffc107'; // 黄色
+            } else {
+                counter.style.color = '#dc3545'; // 红色
+            }
+            
+            // 动态计算并设置输入框的最大长度
+            const FIXED_PREFIX = 'https://';
+            const FIXED_SUFFIX = '/openpilot.git';
+            const FIXED_LENGTH = FIXED_PREFIX.length + 1 + FIXED_SUFFIX.length; // 26字符 (包含中间的/)
+            
+            // 计算主机地址的最大可用长度
+            const maxHostLength = 72 - FIXED_LENGTH - username.length;
+            const maxUsernameLength = 72 - FIXED_LENGTH - host.length;
+            
+            // 设置主机地址的最大长度
+            if (maxHostLength > 0) {
+                hostInput.maxLength = Math.min(50, maxHostLength);
+            } else {
+                hostInput.maxLength = 0; // 无法继续输入
+            }
+            
+            // 设置用户名的最大长度
+            if (maxUsernameLength > 0) {
+                usernameInput.maxLength = Math.min(30, maxUsernameLength);
+            } else {
+                usernameInput.maxLength = 0; // 无法继续输入
+            }
+            
+            // 如果达到限制，显示警告
+            if (gitUrlLength > 72) {
+                document.getElementById('gitUrlPreview').style.backgroundColor = '#ffe6e6';
+                document.getElementById('gitUrlPreview').style.borderColor = '#dc3545';
+            } else {
+                document.getElementById('gitUrlPreview').style.backgroundColor = 'white';
+                document.getElementById('gitUrlPreview').style.borderColor = '#dee2e6';
             }
         }
 
@@ -499,6 +569,9 @@
         uploadArea.addEventListener('dragleave', handleDragLeave);
         uploadArea.addEventListener('drop', handleDrop);
         fileInput.addEventListener('change', handleFileSelect);
+
+        // 初始化Git URL预览
+        updateGitUrlPreview();
 
         function handleDragOver(e) {
             e.preventDefault();
@@ -975,26 +1048,27 @@
             document.getElementById('gitHost').value = currentStrings.host || 'github.com';
             document.getElementById('username').value = currentStrings.username || 'commaai';
             document.getElementById('branch').value = currentStrings.branch || (isNeos ? 'master' : 'release');
-            document.getElementById('loadingMsg').value = currentStrings.loading || 'Installing openpilot';
+            
+            // 设置Loading消息，只显示Installing后面的部分
+            let loadingValue = 'openpilot';
+            if (currentStrings.loading && currentStrings.loading.startsWith('Installing ')) {
+                loadingValue = currentStrings.loading.substring('Installing '.length);
+            }
+            document.getElementById('loadingMsg').value = loadingValue;
             
             // 更新Loading消息计数器
             updateLoadingCounter();
 
-            // 动态设置用户名最大长度（AGNOS:55, NEOS:200）并更新计数器
+            // 动态设置用户名最大长度（AGNOS:55, NEOS:200）
             const usernameInput = document.getElementById('username');
-            const usernameCounter = document.getElementById('usernameCounter');
             const usernameHint = document.getElementById('usernameHint');
             if (currentIsNeos) {
                 usernameInput.maxLength = 200;
-                usernameCounter.textContent = `(${usernameInput.value.length}/200)`;
                 usernameHint.textContent = 'NEOS最多200字符';
             } else {
                 usernameInput.maxLength = 55;
-                usernameCounter.textContent = `(${usernameInput.value.length}/55)`;
                 usernameHint.textContent = 'AGNOS最多55字符';
             }
-            updateUsernameCounter();
-            updateHostCounter();
             updateBranchCounter();
         }
 
@@ -1007,16 +1081,29 @@
             const host = document.getElementById('gitHost').value;
             const username = document.getElementById('username').value;
             const branch = document.getElementById('branch').value;
-            const loadingMsg = document.getElementById('loadingMsg').value;
+            let loadingMsg = document.getElementById('loadingMsg').value;
 
             if (!host || !username || !branch || !loadingMsg) {
                 alert('请填写所有字段');
                 return;
             }
 
-            // 前端已限制长度，这里只做最后检查
-            if (loadingMsg.length > 25) {
-                alert('⚠️ Loading消息长度超限，请修改为25字符以内');
+            // 验证Git URL长度限制（最大72字符）
+            const testGitUrl = `https://${host}/${username}/openpilot.git`;
+            if (testGitUrl.length > 72) {
+                alert(`⚠️ Git URL长度超限：${testGitUrl.length}/72字符\n\n请缩短主机地址或用户名。\n\n当前Git URL：${testGitUrl}`);
+                return;
+            }
+
+            // 确保Loading消息以"Installing "开头
+            if (!loadingMsg.startsWith('Installing ')) {
+                loadingMsg = 'Installing ' + loadingMsg;
+            }
+
+            // 检查完整消息长度（包含Installing前缀）
+            const maxLoadingLength = 39; // 两个系统都支持39字符
+            if (loadingMsg.length > maxLoadingLength) {
+                alert(`⚠️ Loading消息长度超限，请修改为${maxLoadingLength}字符以内（Installing前缀会自动添加）`);
                 return;
             }
 
@@ -1046,11 +1133,13 @@
                 const warningText = truncationWarnings.length > 0 ? 
                     `\n\n⚠️ 注意: ${truncationWarnings.join(', ')}` : '';
                 
-                const successMsg = `✅ 自定义安装器生成成功！
+                const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
+                const maxLoadingLength = 39; // 两个系统都支持39字符
+                const successMsg = `✅ 自定义安装器生成成功！(${systemType}系统)
 
 HOST替换: ${result.hostResult ? '✅' : '⚠️ 可能截断'}
 USERNAME替换: ${result.usernameResult ? '✅' : '⚠️ 可能截断'}  
-LOADING替换: ${result.loadingResult ? '✅' : '⚠️ 可能截断'}
+LOADING替换: ${result.loadingResult ? '✅' : '⚠️ 可能截断'} (Installing前缀保持不变，最大${maxLoadingLength}字符)
 BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 
                 showSuccess(successMsg);
@@ -1076,7 +1165,20 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             try {
                 // 构建新的Git URL
                 const newGitUrl = `https://${host}/${username}/openpilot.git`;
-                debugLog('构建新Git URL', newGitUrl);
+                
+                // 验证Git URL长度限制（最大72字符）
+                if (newGitUrl.length > 72) {
+                    debugLog('Git URL超长', { 
+                        newGitUrl, 
+                        length: newGitUrl.length, 
+                        maxLength: 72,
+                        host,
+                        username
+                    });
+                    throw new Error(`Git URL长度超限：${newGitUrl.length}/72字符。请缩短主机地址或用户名。`);
+                }
+                
+                debugLog('构建新Git URL', { url: newGitUrl, length: newGitUrl.length });
                 
                 // 查找并替换Git URL
                 const currentGitUrl = extractGitUrl(data, isNeos);
@@ -1092,12 +1194,18 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 const currentLoadingMsg = extractLoadingString(data);
                 if (currentLoadingMsg && loadingMsg !== currentLoadingMsg) {
                     debugLog('找到当前Loading消息', currentLoadingMsg);
+                    
+                    // 确保新消息以"Installing "开头
+                    if (!loadingMsg.startsWith('Installing ')) {
+                        loadingMsg = 'Installing ' + loadingMsg;
+                    }
+                    
                     if (isNeos) {
-                        // NEOS: 直接使用null填充逻辑
-                        loadingResult = replaceStringInBinary(data, currentLoadingMsg, loadingMsg);
+                        // NEOS: 只替换Installing后面的部分
+                        loadingResult = replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
                     } else {
-                        // AGNOS: 使用空格+最后null的逻辑
-                        loadingResult = replaceAgnosLoadingMessage(data, currentLoadingMsg, loadingMsg);
+                        // AGNOS: 只替换Installing后面的部分
+                        loadingResult = replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
                     }
                 } else {
                     debugLog('Loading消息未变化或未找到', '跳过Loading替换');
@@ -1121,6 +1229,179 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             const result = { hostResult, usernameResult, loadingResult, branchResult };
             debugLog('修改完成', result);
             return result;
+        }
+
+        // 新的Loading消息替换函数：只替换Installing后面的部分，保持Installing前缀不变
+        function replaceLoadingMessagePartial(data, oldStr, newStr, isNeos) {
+            try {
+                debugLog('开始部分替换Loading消息', { oldStr, newStr, isNeos });
+                
+                // 确保两个字符串都以"Installing "开头
+                if (!oldStr.startsWith('Installing ') || !newStr.startsWith('Installing ')) {
+                    debugLog('Loading消息格式错误', '必须以Installing开头');
+                    return false;
+                }
+                
+                // 提取Installing后面的部分
+                const PREDEFINED_PREFIX = 'Installing ';
+                const oldSuffix = oldStr.substring(PREDEFINED_PREFIX.length);
+                const newSuffix = newStr.substring(PREDEFINED_PREFIX.length);
+                
+                debugLog('提取后缀部分', { oldSuffix, newSuffix });
+                
+                // 如果后缀没有变化，直接返回成功
+                if (oldSuffix === newSuffix) {
+                    debugLog('Loading消息后缀未变化', '跳过替换');
+                    return true;
+                }
+                
+                // 查找Installing前缀的位置
+                const prefixBytes = new TextEncoder().encode(PREDEFINED_PREFIX);
+                const prefixPos = findBytesPattern(data, prefixBytes);
+                
+                if (prefixPos === -1) {
+                    debugLog('未找到Installing前缀', '无法进行部分替换');
+                    return false;
+                }
+                
+                // 计算后缀开始位置
+                const suffixStartPos = prefixPos + prefixBytes.length;
+                
+                // 根据系统类型使用不同的替换策略
+                if (isNeos) {
+                    return replaceSuffixInNeos(data, suffixStartPos, oldSuffix, newSuffix);
+                } else {
+                    return replaceSuffixInAgnos(data, suffixStartPos, oldSuffix, newSuffix);
+                }
+                
+            } catch (e) {
+                debugLog('Loading消息部分替换异常', e.message);
+                return false;
+            }
+        }
+
+        // NEOS系统：替换Loading消息后缀部分
+        function replaceSuffixInNeos(data, suffixStartPos, oldSuffix, newSuffix) {
+            try {
+                debugLog('NEOS后缀替换开始', { oldSuffix, newSuffix, suffixStartPos });
+                
+                // 查找旧后缀的位置
+                const oldSuffixBytes = new TextEncoder().encode(oldSuffix);
+                const oldSuffixPos = findBytesPattern(data, oldSuffixBytes);
+                
+                if (oldSuffixPos === -1) {
+                    debugLog('NEOS未找到旧后缀', oldSuffix);
+                    return false;
+                }
+                
+                // 计算可用空间（扫描后续的null字节）
+                let availableLength = oldSuffixBytes.length;
+                for (let i = oldSuffixPos + oldSuffixBytes.length; i < data.length; i++) {
+                    if (data[i] === 0x00) {
+                        availableLength++;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // 执行替换
+                return replaceStringInBinary(data, oldSuffix, newSuffix);
+                
+            } catch (e) {
+                debugLog('NEOS后缀替换异常', e.message);
+                return false;
+            }
+        }
+
+        // AGNOS系统：替换Loading消息后缀部分
+        function replaceSuffixInAgnos(data, suffixStartPos, oldSuffix, newSuffix) {
+            try {
+                debugLog('AGNOS后缀替换开始', { oldSuffix, newSuffix, suffixStartPos });
+                
+                // 使用固定的地址范围进行替换
+                const LOADING_START_ADDR = 0x0001B115;  // 安装信息开始地址
+                const LOADING_END_ADDR = 0x0001B13C;    // 安装信息结束地址
+                const LOADING_MAX_LENGTH = 39;           // 不包含Installing的Loading消息最大长度
+                
+                debugLog('使用AGNOS固定地址范围', { 
+                    startAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
+                    endAddr: '0x' + LOADING_END_ADDR.toString(16).toUpperCase(),
+                    maxLength: LOADING_MAX_LENGTH
+                });
+                
+                // 检查新后缀长度是否超出限制
+                if (newSuffix.length > LOADING_MAX_LENGTH) {
+                    debugLog('AGNOS Loading消息后缀超长', { 
+                        newSuffix, 
+                        newLength: newSuffix.length, 
+                        maxLength: LOADING_MAX_LENGTH 
+                    });
+                    return false;
+                }
+                
+                // 直接使用固定地址范围进行替换
+                return replaceLoadingMessageAtFixedAddress(data, LOADING_START_ADDR, LOADING_END_ADDR, oldSuffix, newSuffix, LOADING_MAX_LENGTH);
+                
+            } catch (e) {
+                debugLog('AGNOS后缀替换异常', e.message);
+                return false;
+            }
+        }
+
+        // 在固定地址范围替换Loading消息
+        function replaceLoadingMessageAtFixedAddress(data, startAddr, endAddr, oldStr, newStr, maxLength) {
+            try {
+                debugLog('固定地址范围替换开始', { 
+                    startAddr: '0x' + startAddr.toString(16).toUpperCase(),
+                    endAddr: '0x' + endAddr.toString(16).toUpperCase(),
+                    oldStr, newStr, maxLength
+                });
+                
+                // 检查地址范围是否有效
+                if (startAddr >= data.length || endAddr >= data.length || startAddr >= endAddr) {
+                    debugLog('地址范围无效', { 
+                        startAddr, endAddr, dataLength: data.length 
+                    });
+                    return false;
+                }
+                
+                // 计算可用空间
+                const availableSpace = endAddr - startAddr + 1;
+                debugLog('可用空间分析', { availableSpace, maxLength });
+                
+                // 检查新字符串长度
+                if (newStr.length > maxLength) {
+                    debugLog('字符串超长', { 
+                        newStr, newLength: newStr.length, maxLength 
+                    });
+                    return false;
+                }
+                
+                // 将新字符串写入指定地址范围
+                const newBytes = new TextEncoder().encode(newStr);
+                
+                // 写入新内容
+                for (let i = 0; i < newBytes.length; i++) {
+                    data[startAddr + i] = newBytes[i];
+                }
+                
+                // 用空格填充剩余空间
+                for (let i = newBytes.length; i < availableSpace; i++) {
+                    data[startAddr + i] = 0x20; // 空格填充
+                }
+                
+                debugLog('固定地址范围替换完成', { 
+                    newStr, 
+                    writtenBytes: newBytes.length, 
+                    totalSpace: availableSpace 
+                });
+                
+                return true;
+                
+            } catch (e) {
+                debugLog('固定地址范围替换异常', e.message);
+                return false;
+            }
         }
 
         // AGNOS专用：替换Loading消息，采用空格填充+最后null的布局
