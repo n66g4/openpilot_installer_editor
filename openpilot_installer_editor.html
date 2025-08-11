@@ -261,13 +261,13 @@
         <div class="form-group">
             <label for="gitHost">Git 主机地址:</label>
             <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="50" oninput="validateHostInput(this)">
-            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30，最多50字符（Git URL总长度限制72字符，固定部分26字符，超出时将无法继续输入）</div>
+            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30字符，最多50字符（Git URL总长度限制72字符，固定部分26字符，可用空间46字符，超出时将无法继续输入）</div>
         </div>
 
         <div class="form-group">
             <label for="username">用户名:</label>
             <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="30" oninput="validateUsernameInput(this)">
-            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20，最多30字符（Git URL总长度限制72字符，固定部分26字符，超出时将无法继续输入）</div>
+            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（Git URL总长度限制72字符，固定部分26字符，可用空间46字符，超出时将无法继续输入）</div>
         </div>
 
         <!-- Git URL预览 -->
@@ -288,11 +288,13 @@
         </div>
 
         <div class="form-group">
-            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/39)</span></label>
-                            <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="39" 
-                   oninput="updateLoadingCounter()" style="position: relative;">
+            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/38)</span></label>
+                            <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="38" 
+                   oninput="validateLoadingInput(this)" style="position: relative;">
             <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                建议使用15-20个字符的简短消息
+                建议使用15-20个字符的简短消息<br>
+                <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
+                <span style="color: #3498db;">📏 限制：最多38字符（Installing前缀会自动添加，总长度48字符）</span>
             </div>
         </div>
 
@@ -378,41 +380,54 @@
             
             // 计算实际长度（不包含Installing前缀）
             const currentLength = loadingInput.value.length;
-            // 两个系统都限制39字符
-            const maxLength = 39;
+            // 用户实际可以输入的字符数（不包含Installing前缀）
+            const userInputLimit = 38; // 不包含Installing前缀的Loading消息最大长度
+            const totalLimit = userInputLimit + 'Installing '.length; // 总长度限制
             
             // 更新计数器
-            counter.textContent = `(${currentLength}/${maxLength})`;
+            counter.textContent = `(${currentLength}/${userInputLimit})`;
             
             // 根据长度设置颜色和提示
             const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
-            const systemLimit = 39; // 两个系统都支持39字符
             
             if (currentLength === 0) {
                 counter.style.color = '#666';
-                hint.textContent = `建议使用15-20个字符的简短消息（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
+                hint.innerHTML = `建议使用15-20个字符的简短消息<br>
+                <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
+                <span style="color: #3498db;">📏 限制：最多${userInputLimit}字符（Installing前缀会自动添加，总长度${totalLimit}字符）</span>`;
                 hint.style.color = '#666';
                 loadingInput.style.borderColor = '#ddd';
             } else if (currentLength <= 15) {
                 counter.style.color = '#28a745';
-                hint.textContent = `✅ 长度理想，不会被截断（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
+                hint.innerHTML = `✅ 长度理想，不会被截断<br>
+                <span style="color: #28a745;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
                 hint.style.color = '#28a745';
                 loadingInput.style.borderColor = '#28a745';
             } else if (currentLength <= 20) {
                 counter.style.color = '#17a2b8';
-                hint.textContent = `✅ 长度合适，安全范围内（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
+                hint.innerHTML = `✅ 长度合适，安全范围内<br>
+                <span style="color: #17a2b8;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
                 hint.style.color = '#17a2b8';
                 loadingInput.style.borderColor = '#17a2b8';
-            } else if (currentLength <= (systemLimit * 0.8)) {
+            } else if (currentLength <= 30) {
                 counter.style.color = '#ffc107';
-                hint.textContent = `⚠️ 长度偏长，建议缩短（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
+                hint.innerHTML = `⚠️ 长度偏长，建议缩短<br>
+                <span style="color: #ffc107;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
                 hint.style.color = '#ffc107';
                 loadingInput.style.borderColor = '#ffc107';
-            } else if (currentLength <= systemLimit) {
+            } else if (currentLength <= userInputLimit) {
                 counter.style.color = '#fd7e14';
-                hint.textContent = `⚠️ 接近上限，可能在某些文件中被截断（Installing前缀会自动添加，${systemType}系统限制${systemLimit}字符）`;
+                hint.innerHTML = `⚠️ 接近上限，可能在某些文件中被截断<br>
+                <span style="color: #fd7e14;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
                 hint.style.color = '#fd7e14';
                 loadingInput.style.borderColor = '#fd7e14';
+            } else {
+                counter.style.color = '#dc3545';
+                hint.innerHTML = `❌ 超出限制！<br>
+                <span style="color: #dc3545;">当前：${currentLength}字符，最大：${userInputLimit}字符</span><br>
+                <span style="color: #dc3545;">Installing前缀会自动添加，总长度将超过${totalLimit}字符</span>`;
+                hint.style.color = '#dc3545';
+                loadingInput.style.borderColor = '#dc3545';
             }
         }
 
@@ -602,11 +617,8 @@
         function loadFile(file) {
             currentFile = file;
             const fileInfo = document.getElementById('fileInfo');
-            fileInfo.innerHTML = `
-                <strong>文件名:</strong> ${file.name}<br>
-                <strong>大小:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
-                <strong>类型:</strong> 正在识别...
-            `;
+            // 清空之前的内容，避免重复显示
+            fileInfo.innerHTML = '';
             fileInfo.style.display = 'block';
 
             const reader = new FileReader();
@@ -621,29 +633,105 @@
             debugLog('开始检测文件类型', { filename, dataLength: data.length });
             
             // 将部分数据转换为字符串进行特征检测
-            const searchLength = Math.min(data.length, 5000);
+            const searchLength = Math.min(data.length, 10000); // 增加搜索范围
             const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
             
-            // 优先检查系统级特征
-            if (dataStr.includes('__android_log') || dataStr.includes('/system/bin/linker64')) {
-                debugLog('检测到NEOS特征', 'Android系统级特征');
-                return true; // NEOS
-            }
+            let neosScore = 0;
+            let agnosScore = 0;
             
-            if (dataStr.includes('libQt') || dataStr.includes('/lib/ld-linux')) {
-                debugLog('检测到AGNOS特征', 'Ubuntu系统级特征');
-                return false; // AGNOS
+            // NEOS (Android) 特征检测
+            if (dataStr.includes('__android_log')) {
+                debugLog('检测到NEOS特征', '__android_log');
+                neosScore += 3;
             }
-            
-            // 检查通用Android特征
+            if (dataStr.includes('/system/bin/linker64')) {
+                debugLog('检测到NEOS特征', '/system/bin/linker64');
+                neosScore += 3;
+            }
+            if (dataStr.includes('/system/bin/linker')) {
+                debugLog('检测到NEOS特征', '/system/bin/linker');
+                neosScore += 2;
+            }
+            if (dataStr.includes('libc.so')) {
+                debugLog('检测到NEOS特征', 'libc.so');
+                neosScore += 1;
+            }
             if (dataStr.toLowerCase().includes('android')) {
-                debugLog('检测到Android特征', '通用Android标识');
-                return true; // NEOS
+                debugLog('检测到NEOS特征', 'android');
+                neosScore += 2;
+            }
+            if (dataStr.includes('dalvik')) {
+                debugLog('检测到NEOS特征', 'dalvik');
+                neosScore += 2;
+            }
+            if (dataStr.includes('JNI_')) {
+                debugLog('检测到NEOS特征', 'JNI_');
+                neosScore += 1;
             }
             
-            // 默认为AGNOS
-            debugLog('默认识别为AGNOS', '未找到明确特征');
-            return false; // AGNOS
+            // AGNOS (Ubuntu) 特征检测
+            if (dataStr.includes('libQt')) {
+                debugLog('检测到AGNOS特征', 'libQt');
+                agnosScore += 3;
+            }
+            if (dataStr.includes('/lib/ld-linux')) {
+                debugLog('检测到AGNOS特征', '/lib/ld-linux');
+                agnosScore += 3;
+            }
+            if (dataStr.includes('/lib64/ld-linux')) {
+                debugLog('检测到AGNOS特征', '/lib64/ld-linux');
+                agnosScore += 3;
+            }
+            if (dataStr.includes('libstdc++')) {
+                debugLog('检测到AGNOS特征', 'libstdc++');
+                agnosScore += 2;
+            }
+            if (dataStr.includes('libgcc_s')) {
+                debugLog('检测到AGNOS特征', 'libgcc_s');
+                agnosScore += 2;
+            }
+            if (dataStr.includes('libpthread')) {
+                debugLog('检测到AGNOS特征', 'libpthread');
+                agnosScore += 1;
+            }
+            if (dataStr.includes('libdl')) {
+                debugLog('检测到AGNOS特征', 'libdl');
+                agnosScore += 1;
+            }
+            if (dataStr.includes('libm')) {
+                debugLog('检测到AGNOS特征', 'libm');
+                agnosScore += 1;
+            }
+            
+            // 通用特征检测
+            if (dataStr.includes('openpilot')) {
+                debugLog('检测到通用特征', 'openpilot');
+                // openpilot本身不区分系统类型
+            }
+            if (dataStr.includes('git')) {
+                debugLog('检测到通用特征', 'git');
+                // git命令不区分系统类型
+            }
+            
+            debugLog('文件类型检测结果', { 
+                neosScore, 
+                agnosScore, 
+                neosFeatures: neosScore > 0 ? '有' : '无',
+                agnosFeatures: agnosScore > 0 ? '有' : '无'
+            });
+            
+            // 根据分数判断文件类型（严格的判断标准，只基于二进制内容特征）
+            if (neosScore >= 3 && neosScore > agnosScore) {
+                debugLog('最终识别为NEOS', `NEOS分数: ${neosScore}, AGNOS分数: ${agnosScore}, 特征明确`);
+                return true; // NEOS
+            } else if (agnosScore >= 3 && agnosScore > neosScore) {
+                debugLog('最终识别为AGNOS', `NEOS分数: ${neosScore}, AGNOS分数: ${agnosScore}, 特征明确`);
+                return false; // AGNOS
+            } else {
+                // 分数不够明确或差异不够大，无法确定文件类型
+                debugLog('无法确定文件类型', `NEOS分数: ${neosScore}, AGNOS分数: ${agnosScore}, 特征不够明确或差异不够大`);
+                return null; // 无法确定
+            }
         }
 
         function extractCurrentStrings(data, isNeos) {
@@ -1018,6 +1106,12 @@
         function analyzeFile() {
             if (!fileData) return;
             
+            // 防止重复分析
+            if (document.getElementById('fileInfo').innerHTML.includes('文件加载成功')) {
+                debugLog('文件已经分析过，跳过重复分析');
+                return;
+            }
+            
             debugLog('开始分析文件', { 
                 fileName: currentFile.name, 
                 fileSize: currentFile.size 
@@ -1026,6 +1120,21 @@
             // 检测文件类型
             const isNeos = detectFileType(fileData, currentFile.name);
             currentIsNeos = isNeos;
+            
+            if (isNeos === null) {
+                debugLog('文件类型检测', { isNeos, type: '无法确定' });
+                // 无法确定文件类型时，显示为未知
+                const fileInfo = document.getElementById('fileInfo');
+                fileInfo.innerHTML = `
+                    <strong>文件名:</strong> ${currentFile.name}<br>
+                    <strong>大小:</strong> ${(currentFile.size / 1024 / 1024).toFixed(2)} MB<br>
+                    <strong>类型:</strong> ❓ 无法确定（建议检查文件是否正确）<br>
+                    <strong>状态:</strong> ⚠️ 文件类型识别失败，可能影响后续操作
+                `;
+                fileInfo.style.display = 'block';
+                return; // 停止分析
+            }
+            
             debugLog('文件类型检测', { isNeos, type: isNeos ? 'NEOS' : 'AGNOS' });
             
             // 提取当前字符串
@@ -1047,7 +1156,7 @@
             // 设置默认值或当前值
             document.getElementById('gitHost').value = currentStrings.host || 'github.com';
             document.getElementById('username').value = currentStrings.username || 'commaai';
-            document.getElementById('branch').value = currentStrings.branch || (isNeos ? 'master' : 'release');
+            document.getElementById('branch').value = currentStrings.branch || (currentIsNeos ? 'master' : 'release');
             
             // 设置Loading消息，只显示Installing后面的部分
             let loadingValue = 'openpilot';
@@ -1059,16 +1168,12 @@
             // 更新Loading消息计数器
             updateLoadingCounter();
 
-            // 动态设置用户名最大长度（AGNOS:55, NEOS:200）
+            // 动态设置用户名最大长度（基于Git URL长度限制）
             const usernameInput = document.getElementById('username');
             const usernameHint = document.getElementById('usernameHint');
-            if (currentIsNeos) {
-                usernameInput.maxLength = 200;
-                usernameHint.textContent = 'NEOS最多200字符';
-            } else {
-                usernameInput.maxLength = 55;
-                usernameHint.textContent = 'AGNOS最多55字符';
-            }
+            // 用户名长度受Git URL总长度72字符限制，最多30字符
+            usernameInput.maxLength = 30;
+            usernameHint.textContent = '最多30字符（Git URL总长度限制72字符）';
             updateBranchCounter();
         }
 
@@ -1095,16 +1200,36 @@
                 return;
             }
 
-            // 确保Loading消息以"Installing "开头
-            if (!loadingMsg.startsWith('Installing ')) {
-                loadingMsg = 'Installing ' + loadingMsg;
+
+
+            // 检查用户输入长度（不包含Installing前缀）
+            const maxLoadingLength = 38; // 不包含Installing前缀的Loading消息最大长度
+            const userInputLength = loadingMsg.length;
+            
+            if (userInputLength > maxLoadingLength) {
+                // 用户实际可以输入的字符数就是maxLoadingLength
+                const userInputLimit = maxLoadingLength;
+                const currentUserInput = loadingMsg;
+            
+            alert(`⚠️ Loading消息长度超限！
+
+当前输入: "${currentUserInput}" (${userInputLength}字符)
+最大允许: ${userInputLimit}字符
+
+请缩短你的输入内容，或者使用以下建议：
+• 使用缩写: "openpilot" → "op"
+• 简化描述: "Advanced System Configuration Tool" → "System Config"
+• 使用简短词汇: "Installing" → "Setup"
+
+注意：系统会自动添加"Installing "前缀，最终显示为"Installing ${currentUserInput}"。
+
+修改后重新尝试生成安装器。`);
+                return;
             }
 
-            // 检查完整消息长度（包含Installing前缀）
-            const maxLoadingLength = 39; // 两个系统都支持39字符
-            if (loadingMsg.length > maxLoadingLength) {
-                alert(`⚠️ Loading消息长度超限，请修改为${maxLoadingLength}字符以内（Installing前缀会自动添加）`);
-                return;
+            // 确保Loading消息以"Installing "开头（用于二进制替换）
+            if (!loadingMsg.startsWith('Installing ')) {
+                loadingMsg = 'Installing ' + loadingMsg;
             }
 
             debugLog('开始生成自定义安装器', { host, username, branch, loadingMsg });
@@ -1122,7 +1247,17 @@
                 const result = modifyBinary(modifiedData, host, username, branch, loadingMsg, isNeos);
                 debugLog('修改结果', result);
                 
-                const filename = `installer_openpilot_custom_${username}_${Date.now()}`;
+                // 生成更有意义的文件名，基于安装信息
+                const fileSystemType = currentIsNeos ? 'NEOS' : 'AGNOS';
+                const loadingDisplay = loadingMsg.startsWith('Installing ') ? 
+                    loadingMsg.substring('Installing '.length) : loadingMsg;
+                
+                // 清理特殊字符，确保文件名安全
+                const safeUsername = username.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeLoading = loadingDisplay.replace(/[^a-zA-Z0-9_-]/g, '_');
+                const safeBranch = branch.replace(/[^a-zA-Z0-9_-]/g, '_');
+                
+                const filename = `${fileSystemType}_${safeUsername}_${safeLoading}_${safeBranch}`;
                 downloadFile(modifiedData, filename);
                 
                 const truncationWarnings = [];
@@ -1134,7 +1269,7 @@
                     `\n\n⚠️ 注意: ${truncationWarnings.join(', ')}` : '';
                 
                 const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
-                const maxLoadingLength = 39; // 两个系统都支持39字符
+                const maxLoadingLength = 38; // 不包含Installing前缀的Loading消息最大长度
                 const successMsg = `✅ 自定义安装器生成成功！(${systemType}系统)
 
 HOST替换: ${result.hostResult ? '✅' : '⚠️ 可能截断'}
@@ -1319,9 +1454,9 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 debugLog('AGNOS后缀替换开始', { oldSuffix, newSuffix, suffixStartPos });
                 
                 // 使用固定的地址范围进行替换
-                const LOADING_START_ADDR = 0x0001B115;  // 安装信息开始地址
+                const LOADING_START_ADDR = 0x0001B116;  // 安装信息开始地址
                 const LOADING_END_ADDR = 0x0001B13C;    // 安装信息结束地址
-                const LOADING_MAX_LENGTH = 39;           // 不包含Installing的Loading消息最大长度
+                const LOADING_MAX_LENGTH = 38;           // 不包含Installing的Loading消息最大长度
                 
                 debugLog('使用AGNOS固定地址范围', { 
                     startAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
@@ -1624,6 +1759,61 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
         function showSuccess(message) {
             const result = document.getElementById('result');
             result.innerHTML = `<div class="success" style="margin-top: 20px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px;">${message}</div>`;
+        }
+
+        // 验证Loading消息输入，只允许英文字母、数字、空格和常用符号
+        function validateLoadingInput(inputElement) {
+            const value = inputElement.value;
+            
+            // 只允许英文字母、数字、空格、连字符、下划线、点号、感叹号、问号
+            const allowedPattern = /^[a-zA-Z0-9\s\-_.!?]*$/;
+            
+            if (!allowedPattern.test(value)) {
+                // 过滤掉不允许的字符
+                const filteredValue = value.replace(/[^a-zA-Z0-9\s\-_.!?]/g, '');
+                inputElement.value = filteredValue;
+                
+                // 显示提示
+                showInputWarning('已自动过滤掉不允许的字符（只允许英文字母、数字、空格和常用符号）');
+            }
+            
+            // 更新计数器
+            updateLoadingCounter();
+        }
+        
+        // 显示输入警告提示
+        function showInputWarning(message) {
+            const warningDiv = document.getElementById('inputWarning') || createInputWarningElement();
+            warningDiv.textContent = message;
+            warningDiv.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                warningDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 创建输入警告元素
+        function createInputWarningElement() {
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'inputWarning';
+            warningDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                color: #856404;
+                padding: 10px 15px;
+                border-radius: 5px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                z-index: 1000;
+                display: none;
+                max-width: 300px;
+                font-size: 14px;
+            `;
+            document.body.appendChild(warningDiv);
+            return warningDiv;
         }
 
         function showError(message) {
