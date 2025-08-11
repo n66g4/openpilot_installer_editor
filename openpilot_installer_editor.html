@@ -258,47 +258,50 @@
             <!-- 文件信息将在这里显示 -->
         </div>
 
-        <div class="form-group">
-            <label for="gitHost">Git 主机地址:</label>
-            <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="50" oninput="validateHostInput(this)">
-            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30字符，最多50字符（Git URL总长度限制72字符，固定部分26字符，可用空间46字符，超出时将无法继续输入）</div>
-        </div>
-
-        <div class="form-group">
-            <label for="username">用户名:</label>
-            <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="30" oninput="validateUsernameInput(this)">
-            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（Git URL总长度限制72字符，固定部分26字符，可用空间46字符，超出时将无法继续输入）</div>
-        </div>
-
-        <!-- Git URL预览 -->
-        <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
-            <label style="font-weight: bold; color: #495057;">🔗 Git URL预览:</label>
-            <div id="gitUrlPreview" style="font-family: monospace; background: white; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; margin-top: 8px; word-break: break-all;">
-                https://github.com/commaai/openpilot.git
+        <!-- 自定义安装器配置区域 - 默认隐藏 -->
+        <div id="installerConfigArea" style="display: none;">
+            <div class="form-group">
+                <label for="gitHost">Git 主机地址:</label>
+                <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="50" oninput="validateHostInput(this)">
+                <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30字符，最多50字符（Git URL总长度限制72字符，固定部分23字符，可用空间49字符，超出时将无法继续输入）</div>
             </div>
-            <div id="gitUrlCounter" style="font-size: 0.85em; color: #666; margin-top: 8px;">
-                长度: <span id="gitUrlLength">0</span>/72 字符
+
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="30" oninput="validateUsernameInput(this)">
+                <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（Git URL总长度限制72字符，固定部分23字符，可用空间49字符，超出时将无法继续输入）</div>
             </div>
-        </div>
 
-        <div class="form-group">
-            <label for="branch">分支名: <span id="branchCounter" style="font-size: 0.9em; color: #666;">(0/20)</span></label>
-                <input type="text" id="branch" placeholder="例如: master, release" maxlength="20" oninput="updateBranchCounter()">
-            <div id="branchHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议 ≤ 16 字符，最多20字符</div>
-        </div>
-
-        <div class="form-group">
-            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/38)</span></label>
-                            <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="38" 
-                   oninput="validateLoadingInput(this)" style="position: relative;">
-            <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                建议使用15-20个字符的简短消息<br>
-                <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
-                <span style="color: #3498db;">📏 限制：最多38字符（Installing前缀会自动添加，总长度48字符）</span>
+            <!-- Git URL预览 -->
+            <div class="form-group" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">
+                <label style="font-weight: bold; color: #495057;">🔗 Git URL预览:</label>
+                <div id="gitUrlPreview" style="font-family: monospace; background: white; padding: 10px; border-radius: 4px; border: 1px solid #dee2e6; margin-top: 8px; word-break: break-all;">
+                    https://github.com/commaai/openpilot.git
+                </div>
+                <div id="gitUrlCounter" style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                    长度: <span id="gitUrlLength">0</span>/72 字符
+                </div>
             </div>
-        </div>
 
-        <button class="btn" onclick="generateInstaller()">🔧 生成自定义安装器</button>
+            <div class="form-group">
+                <label for="branch">分支名: <span id="branchCounter" style="font-size: 0.9em; color: #666;">(0/20)</span></label>
+                    <input type="text" id="branch" placeholder="例如: master, release" maxlength="20" oninput="updateBranchCounter()">
+                <div id="branchHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议 ≤ 16 字符，最多20字符</div>
+            </div>
+
+            <div class="form-group">
+                <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/38)</span></label>
+                                <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="38" 
+                       oninput="validateLoadingInput(this)" style="position: relative;">
+                <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                    建议使用15-20个字符的简短消息<br>
+                    <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
+                    <span style="color: #3498db;">📏 限制：最多38字符（Installing前缀会自动添加，总长度48字符）</span>
+                </div>
+            </div>
+
+            <button class="btn" onclick="generateInstaller()">🔧 生成自定义安装器</button>
+        </div>
 
         <div id="result"></div>
 
@@ -338,7 +341,11 @@
             }
             
             if (debugMode) {
-                debugLog('调试模式测试', '这是一条测试日志');
+                debugLog('调试模式已启用', { 
+                    timestamp: new Date().toISOString(),
+                    mode: 'debug',
+                    features: ['日志记录', '错误追踪']
+                });
             }
         }
 
@@ -370,100 +377,142 @@
             const logContent = debugLogs.join('\n');
             const filename = `openpilot-installer-debug-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
             downloadFile(new TextEncoder().encode(logContent), filename);
-            alert(`调试日志已下载: ${filename}`);
         }
+
+        // 常量定义，提高可维护性
+        const LOADING_CONFIG = {
+            MAX_LENGTH: 38,
+            PREFIX: 'Installing ',
+            IDEAL_LENGTH: 15,
+            GOOD_LENGTH: 20,
+            WARNING_LENGTH: 30
+        };
 
         function updateLoadingCounter() {
             const loadingInput = document.getElementById('loadingMsg');
             const counter = document.getElementById('loadingCounter');
             const hint = document.getElementById('loadingHint');
             
-            // 计算实际长度（不包含Installing前缀）
             const currentLength = loadingInput.value.length;
-            // 用户实际可以输入的字符数（不包含Installing前缀）
-            const userInputLimit = 38; // 不包含Installing前缀的Loading消息最大长度
-            const totalLimit = userInputLimit + 'Installing '.length; // 总长度限制
+            const totalLimit = LOADING_CONFIG.MAX_LENGTH + LOADING_CONFIG.PREFIX.length;
             
             // 更新计数器
-            counter.textContent = `(${currentLength}/${userInputLimit})`;
+            counter.textContent = `(${currentLength}/${LOADING_CONFIG.MAX_LENGTH})`;
             
-            // 根据长度设置颜色和提示
-            const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
+            // 获取状态信息
+            const status = getLoadingStatus(currentLength);
             
-            if (currentLength === 0) {
-                counter.style.color = '#666';
-                hint.innerHTML = `建议使用15-20个字符的简短消息<br>
-                <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
-                <span style="color: #3498db;">📏 限制：最多${userInputLimit}字符（Installing前缀会自动添加，总长度${totalLimit}字符）</span>`;
-                hint.style.color = '#666';
-                loadingInput.style.borderColor = '#ddd';
-            } else if (currentLength <= 15) {
-                counter.style.color = '#28a745';
-                hint.innerHTML = `✅ 长度理想，不会被截断<br>
-                <span style="color: #28a745;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
-                hint.style.color = '#28a745';
-                loadingInput.style.borderColor = '#28a745';
-            } else if (currentLength <= 20) {
-                counter.style.color = '#17a2b8';
-                hint.innerHTML = `✅ 长度合适，安全范围内<br>
-                <span style="color: #17a2b8;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
-                hint.style.color = '#17a2b8';
-                loadingInput.style.borderColor = '#17a2b8';
-            } else if (currentLength <= 30) {
-                counter.style.color = '#ffc107';
-                hint.innerHTML = `⚠️ 长度偏长，建议缩短<br>
-                <span style="color: #ffc107;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
-                hint.style.color = '#ffc107';
-                loadingInput.style.borderColor = '#ffc107';
-            } else if (currentLength <= userInputLimit) {
-                counter.style.color = '#fd7e14';
-                hint.innerHTML = `⚠️ 接近上限，可能在某些文件中被截断<br>
-                <span style="color: #fd7e14;">Installing前缀会自动添加，总长度：${currentLength + 'Installing '.length}/${totalLimit}字符</span>`;
-                hint.style.color = '#fd7e14';
-                loadingInput.style.borderColor = '#fd7e14';
+            // 应用状态样式
+            counter.style.color = status.color;
+            hint.innerHTML = status.message;
+            hint.style.color = status.color;
+            loadingInput.style.borderColor = status.borderColor;
+        }
+
+        // 获取Loading消息状态信息
+        function getLoadingStatus(length) {
+            const totalLength = length + LOADING_CONFIG.PREFIX.length;
+            const totalLimit = LOADING_CONFIG.MAX_LENGTH + LOADING_CONFIG.PREFIX.length;
+            
+            if (length === 0) {
+                return {
+                    color: '#666',
+                    borderColor: '#ddd',
+                    message: `建议使用15-20个字符的简短消息<br>
+                    <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
+                    <span style="color: #3498db;">📏 限制：最多${LOADING_CONFIG.MAX_LENGTH}字符（Installing前缀会自动添加，总长度${totalLimit}字符）</span>`
+                };
+            } else if (length <= LOADING_CONFIG.IDEAL_LENGTH) {
+                return {
+                    color: '#28a745',
+                    borderColor: '#28a745',
+                    message: `✅ 长度理想，不会被截断<br>
+                    <span style="color: #28a745;">Installing前缀会自动添加，总长度：${totalLength}/${totalLimit}字符</span>`
+                };
+            } else if (length <= LOADING_CONFIG.GOOD_LENGTH) {
+                return {
+                    color: '#17a2b8',
+                    borderColor: '#17a2b8',
+                    message: `✅ 长度合适，安全范围内<br>
+                    <span style="color: #17a2b8;">Installing前缀会自动添加，总长度：${totalLength}/${totalLimit}字符</span>`
+                };
+            } else if (length <= LOADING_CONFIG.WARNING_LENGTH) {
+                return {
+                    color: '#ffc107',
+                    borderColor: '#ffc107',
+                    message: `⚠️ 长度偏长，建议缩短<br>
+                    <span style="color: #ffc107;">Installing前缀会自动添加，总长度：${totalLength}/${totalLimit}字符</span>`
+                };
+            } else if (length <= LOADING_CONFIG.MAX_LENGTH) {
+                return {
+                    color: '#fd7e14',
+                    borderColor: '#fd7e14',
+                    message: `⚠️ 接近上限，可能在某些文件中被截断<br>
+                    <span style="color: #fd7e14;">Installing前缀会自动添加，总长度：${totalLength}/${totalLimit}字符</span>`
+                };
             } else {
-                counter.style.color = '#dc3545';
-                hint.innerHTML = `❌ 超出限制！<br>
-                <span style="color: #dc3545;">当前：${currentLength}字符，最大：${userInputLimit}字符</span><br>
-                <span style="color: #dc3545;">Installing前缀会自动添加，总长度将超过${totalLimit}字符</span>`;
-                hint.style.color = '#dc3545';
-                loadingInput.style.borderColor = '#dc3545';
+                return {
+                    color: '#dc3545',
+                    borderColor: '#dc3545',
+                    message: `❌ 超出限制！<br>
+                    <span style="color: #dc3545;">当前：${length}字符，最大：${LOADING_CONFIG.MAX_LENGTH}字符</span><br>
+                    <span style="color: #dc3545;">Installing前缀会自动添加，总长度将超过${totalLimit}字符</span>`
+                };
             }
         }
 
 
 
 
+
+        // 分支配置常量
+        const BRANCH_CONFIG = {
+            MAX_LENGTH: 20,
+            IDEAL_LENGTH: 12,
+            GOOD_LENGTH: 16,
+            WARNING_LENGTH: 18
+        };
 
         function updateBranchCounter() {
             const input = document.getElementById('branch');
             const counter = document.getElementById('branchCounter');
             const hint = document.getElementById('branchHint');
             const len = input.value.length;
-            const max = parseInt(input.maxLength || '20', 10);
+            const max = parseInt(input.maxLength || BRANCH_CONFIG.MAX_LENGTH.toString(), 10);
+            
             counter.textContent = `(${len}/${max})`;
-            if (len === 0) {
-                counter.style.color = '#666';
-                hint.style.color = '#666';
-                input.style.borderColor = '#ddd';
-            } else if (len <= 12) {
-                counter.style.color = '#28a745';
-                hint.style.color = '#28a745';
-                input.style.borderColor = '#28a745';
-            } else if (len <= 16) {
-                counter.style.color = '#17a2b8';
-                hint.style.color = '#17a2b8';
-                input.style.borderColor = '#17a2b8';
-            } else if (len <= 18) {
-                counter.style.color = '#ffc107';
-                hint.style.color = '#ffc107';
-                input.style.borderColor = '#ffc107';
+            
+            // 获取状态信息
+            const status = getBranchStatus(len);
+            
+            // 应用状态样式
+            counter.style.color = status.color;
+            hint.style.color = status.color;
+            input.style.borderColor = status.borderColor;
+        }
+
+        // 获取分支状态信息
+        function getBranchStatus(length) {
+            if (length === 0) {
+                return { color: '#666', borderColor: '#ddd' };
+            } else if (length <= BRANCH_CONFIG.IDEAL_LENGTH) {
+                return { color: '#28a745', borderColor: '#28a745' };
+            } else if (length <= BRANCH_CONFIG.GOOD_LENGTH) {
+                return { color: '#17a2b8', borderColor: '#17a2b8' };
+            } else if (length <= BRANCH_CONFIG.WARNING_LENGTH) {
+                return { color: '#ffc107', borderColor: '#ffc107' };
             } else {
-                counter.style.color = '#fd7e14';
-                hint.style.color = '#fd7e14';
-                input.style.borderColor = '#fd7e14';
+                return { color: '#fd7e14', borderColor: '#fd7e14' };
             }
         }
+
+        // Git URL配置常量
+        const GIT_URL_CONFIG = {
+            MAX_LENGTH: 72,
+            FIXED_PREFIX: 'https://',
+            FIXED_SUFFIX: '/openpilot.git',
+            FIXED_LENGTH: 23 // 'https://' + '/' + '/openpilot.git' (包含host和username之间的斜杠)
+        };
 
         // 验证主机地址输入
         function validateHostInput(inputElement) {
@@ -495,22 +544,19 @@
 
         // 验证输入长度并阻止超长输入
         function validateInputLength(inputElement, currentValue, otherValue, fieldType) {
-            const FIXED_PREFIX = 'https://';
-            const FIXED_SUFFIX = '/openpilot.git';
-            const FIXED_LENGTH = FIXED_PREFIX.length + 1 + FIXED_SUFFIX.length; // 26字符 (包含中间的/)
-            
-            // 计算当前字段的最大可用长度
-            const maxLength = 72 - FIXED_LENGTH - otherValue.length;
+            const maxLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - otherValue.length;
             
             if (maxLength <= 0) {
                 // 如果无法继续输入，阻止输入
                 inputElement.value = currentValue.substring(0, currentValue.length - 1);
+                showInputWarning(`${fieldType === 'host' ? '主机地址' : '用户名'}过长，无法继续输入`);
                 return false;
             }
             
             // 如果当前输入超过最大长度，截断到最大长度
             if (currentValue.length > maxLength) {
                 inputElement.value = currentValue.substring(0, maxLength);
+                showInputWarning(`${fieldType === 'host' ? '主机地址' : '用户名'}已截断到最大长度`);
                 return false;
             }
             
@@ -523,7 +569,7 @@
             const usernameInput = document.getElementById('username');
             const host = hostInput.value || 'github.com';
             const username = usernameInput.value || 'commaai';
-            const gitUrl = `https://${host}/${username}/openpilot.git`;
+            const gitUrl = `${GIT_URL_CONFIG.FIXED_PREFIX}${host}/${username}${GIT_URL_CONFIG.FIXED_SUFFIX}`;
             const gitUrlLength = gitUrl.length;
             
             // 更新预览内容
@@ -532,46 +578,40 @@
             
             // 根据长度设置颜色
             const counter = document.getElementById('gitUrlLength');
-            if (gitUrlLength <= 50) {
-                counter.style.color = '#28a745'; // 绿色
-            } else if (gitUrlLength <= 65) {
-                counter.style.color = '#17a2b8'; // 蓝色
-            } else if (gitUrlLength <= 72) {
-                counter.style.color = '#ffc107'; // 黄色
-            } else {
-                counter.style.color = '#dc3545'; // 红色
-            }
+            const status = getGitUrlStatus(gitUrlLength);
+            counter.style.color = status.color;
             
             // 动态计算并设置输入框的最大长度
-            const FIXED_PREFIX = 'https://';
-            const FIXED_SUFFIX = '/openpilot.git';
-            const FIXED_LENGTH = FIXED_PREFIX.length + 1 + FIXED_SUFFIX.length; // 26字符 (包含中间的/)
-            
-            // 计算主机地址的最大可用长度
-            const maxHostLength = 72 - FIXED_LENGTH - username.length;
-            const maxUsernameLength = 72 - FIXED_LENGTH - host.length;
+            const maxHostLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - username.length;
+            const maxUsernameLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - host.length;
             
             // 设置主机地址的最大长度
-            if (maxHostLength > 0) {
-                hostInput.maxLength = Math.min(50, maxHostLength);
-            } else {
-                hostInput.maxLength = 0; // 无法继续输入
-            }
+            hostInput.maxLength = maxHostLength > 0 ? Math.min(50, maxHostLength) : 0;
             
             // 设置用户名的最大长度
-            if (maxUsernameLength > 0) {
-                usernameInput.maxLength = Math.min(30, maxUsernameLength);
-            } else {
-                usernameInput.maxLength = 0; // 无法继续输入
-            }
+            usernameInput.maxLength = maxUsernameLength > 0 ? Math.min(30, maxUsernameLength) : 0;
             
-            // 如果达到限制，显示警告
-            if (gitUrlLength > 72) {
-                document.getElementById('gitUrlPreview').style.backgroundColor = '#ffe6e6';
-                document.getElementById('gitUrlPreview').style.borderColor = '#dc3545';
+            // 设置预览区域的样式
+            const previewElement = document.getElementById('gitUrlPreview');
+            if (gitUrlLength > GIT_URL_CONFIG.MAX_LENGTH) {
+                previewElement.style.backgroundColor = '#ffe6e6';
+                previewElement.style.borderColor = '#dc3545';
             } else {
-                document.getElementById('gitUrlPreview').style.backgroundColor = 'white';
-                document.getElementById('gitUrlPreview').style.borderColor = '#dee2e6';
+                previewElement.style.backgroundColor = 'white';
+                previewElement.style.borderColor = '#dee2e6';
+            }
+        }
+
+        // 获取Git URL状态信息
+        function getGitUrlStatus(length) {
+            if (length <= 50) {
+                return { color: '#28a745' }; // 绿色
+            } else if (length <= 65) {
+                return { color: '#17a2b8' }; // 蓝色
+            } else if (length <= GIT_URL_CONFIG.MAX_LENGTH) {
+                return { color: '#ffc107' }; // 黄色
+            } else {
+                return { color: '#dc3545' }; // 红色
             }
         }
 
@@ -834,7 +874,13 @@
                 const commandBytes = new TextEncoder().encode(command);
                 const index = findBytesPattern(data, commandBytes);
                 if (index !== -1) {
-                    debugLog(`字节级找到${command}`, { position: index });
+                    const endIndex = index + commandBytes.length - 1;
+                    debugLog(`字节级找到${command}`, { 
+                        position: index,
+                        hexAddress: `0x${index.toString(16).toUpperCase()}`,
+                        range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                        size: commandBytes.length
+                    });
                 }
             }
         }
@@ -847,7 +893,13 @@
                 const cloneBytes = new TextEncoder().encode('git clone ');
                 const cloneIndex = findBytesPattern(data, cloneBytes);
                 if (cloneIndex !== -1) {
-                    debugLog('NEOS找到git clone命令', { position: cloneIndex });
+                    const endIndex = cloneIndex + cloneBytes.length - 1;
+                    debugLog('NEOS找到git clone命令', { 
+                        position: cloneIndex,
+                        hexAddress: `0x${cloneIndex.toString(16).toUpperCase()}`,
+                        range: `0x${cloneIndex.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                        size: cloneBytes.length
+                    });
                     
                     let urlStart = cloneIndex + cloneBytes.length;
                     let urlEnd = urlStart;
@@ -905,7 +957,16 @@
                             const str = decoder.decode(data.slice(i, end));
                             // 检查是否是openpilot Git URL
                             if (str.includes('openpilot.git')) {
-                                debugLog('字节级搜索找到Git URL', str);
+                                const endIndex = i + str.length - 1;
+                                debugLog('字节级搜索找到Git URL', {
+                                    url: str,
+                                    startPosition: i,
+                                    endPosition: endIndex,
+                                    hexStartAddress: `0x${i.toString(16).toUpperCase()}`,
+                                    hexEndAddress: `0x${endIndex.toString(16).toUpperCase()}`,
+                                    range: `0x${i.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                                    size: str.length
+                                });
                                 return str;
                             }
                         }
@@ -939,8 +1000,15 @@
                 for (const command of gitCommands) {
                     const commandBytes = new TextEncoder().encode(command);
                     const index = findBytesPattern(data, commandBytes);
-                    if (index !== -1) {
-                        debugLog('AGNOS找到git命令', { command, position: index });
+                                            if (index !== -1) {
+                            const endIndex = index + commandBytes.length - 1;
+                            debugLog('AGNOS找到git命令', { 
+                                command, 
+                                position: index,
+                                hexAddress: `0x${index.toString(16).toUpperCase()}`,
+                                range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                                size: commandBytes.length
+                            });
                         
                         // 找到命令，提取后面的分支名
                         const start = index + commandBytes.length;
@@ -971,7 +1039,14 @@
                 const commandBytes = new TextEncoder().encode(command);
                 const index = findBytesPattern(data, commandBytes);
                 if (index !== -1) {
-                    debugLog('备用方案找到git命令', { command, position: index });
+                    const endIndex = index + commandBytes.length - 1;
+                    debugLog('备用方案找到git命令', { 
+                        command, 
+                        position: index,
+                        hexAddress: `0x${index.toString(16).toUpperCase()}`,
+                        range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                        size: commandBytes.length
+                    });
                     
                     // 找到命令，提取后面的分支名
                     const start = index + commandBytes.length;
@@ -1008,7 +1083,13 @@
             const cloneIndex = findBytesPattern(data, cloneBytes);
             
             if (cloneIndex !== -1) {
-                debugLog('找到git clone命令', { position: cloneIndex });
+                const endIndex = cloneIndex + cloneBytes.length - 1;
+                debugLog('找到git clone命令', { 
+                    position: cloneIndex,
+                    hexAddress: `0x${cloneIndex.toString(16).toUpperCase()}`,
+                    range: `0x${cloneIndex.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                    size: cloneBytes.length
+                });
                 
                 // 找到git clone命令，查找整行命令
                 let lineEnd = cloneIndex;
@@ -1053,7 +1134,13 @@
             const index = findBytesPattern(data, installingBytes);
             
             if (index !== -1) {
-                debugLog('找到Installing字节位置', { position: index });
+                const endIndex = index + installingBytes.length - 1;
+                debugLog('找到Installing字节位置', { 
+                    position: index,
+                    hexAddress: `0x${index.toString(16).toUpperCase()}`,
+                    range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                    size: installingBytes.length
+                });
                 
                 // 找到"Installing "，提取后面的内容
                 const start = index;
@@ -1069,7 +1156,15 @@
                     try {
                         const decoder = new TextDecoder('utf-8', { fatal: false });
                         const loadingMsg = decoder.decode(data.slice(start, end));
-                        debugLog('字节级搜索找到Loading消息', loadingMsg);
+                        debugLog('字节级搜索找到Loading消息', {
+                            message: loadingMsg,
+                            startPosition: start,
+                            endPosition: end,
+                            hexStartAddress: `0x${start.toString(16).toUpperCase()}`,
+                            hexEndAddress: `0x${end.toString(16).toUpperCase()}`,
+                            range: `0x${start.toString(16).toUpperCase()}-0x${end.toString(16).toUpperCase()}`,
+                            size: end - start
+                        });
                         return loadingMsg.trim();
                     } catch (error) {
                         debugLog('Loading消息解码失败', error.message);
@@ -1132,6 +1227,13 @@
                     <strong>状态:</strong> ⚠️ 文件类型识别失败，可能影响后续操作
                 `;
                 fileInfo.style.display = 'block';
+                
+                // 隐藏自定义安装器配置区域
+                const configArea = document.getElementById('installerConfigArea');
+                if (configArea) {
+                    configArea.style.display = 'none';
+                }
+                
                 return; // 停止分析
             }
             
@@ -1175,6 +1277,12 @@
             usernameInput.maxLength = 30;
             usernameHint.textContent = '最多30字符（Git URL总长度限制72字符）';
             updateBranchCounter();
+            
+            // 显示自定义安装器配置区域
+            const configArea = document.getElementById('installerConfigArea');
+            if (configArea) {
+                configArea.style.display = 'block';
+            }
         }
 
         function generateInstaller() {
@@ -1820,6 +1928,148 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             const result = document.getElementById('result');
             result.innerHTML = `<div class="error" style="margin-top: 20px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px;">${message}</div>`;
         }
+
+        // 增强功能：文件拖拽视觉反馈
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'linear-gradient(135deg, #f0f2ff 0%, #e6eaff 100%)';
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            uploadArea.style.borderColor = '#ddd';
+            uploadArea.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+        }
+
+        // 增强功能：自动保存用户偏好
+        function saveUserPreferences() {
+            const preferences = {
+                gitHost: document.getElementById('gitHost').value,
+                username: document.getElementById('username').value,
+                loadingMsg: document.getElementById('loadingMsg').value
+            };
+            localStorage.setItem('openpilot_preferences', JSON.stringify(preferences));
+        }
+
+        function loadUserPreferences() {
+            try {
+                const saved = localStorage.getItem('openpilot_preferences');
+                if (saved) {
+                    const preferences = JSON.parse(saved);
+                    if (preferences.gitHost) document.getElementById('gitHost').value = preferences.gitHost;
+                    if (preferences.username) document.getElementById('username').value = preferences.username;
+                    if (preferences.loadingMsg) document.getElementById('loadingMsg').value = preferences.loadingMsg;
+                    
+                    // 更新相关显示
+                    updateGitUrlPreview();
+                    updateLoadingCounter();
+                    updateBranchCounter();
+                }
+            } catch (error) {
+                debugLog('加载用户偏好失败', error.message);
+            }
+        }
+
+        // 增强功能：键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+S 保存偏好
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveUserPreferences();
+                showSuccess('用户偏好已保存');
+            }
+            
+            // Ctrl+L 加载偏好
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                loadUserPreferences();
+                showSuccess('用户偏好已加载');
+            }
+            
+            // Enter 键在输入框中时自动跳转
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                const inputs = ['gitHost', 'username', 'branch', 'loadingMsg'];
+                const currentIndex = inputs.indexOf(e.target.id);
+                if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
+                    document.getElementById(inputs[currentIndex + 1]).focus();
+                }
+            }
+        });
+
+        // 增强功能：页面加载时自动加载偏好
+        window.addEventListener('load', function() {
+            loadUserPreferences();
+            
+            // 确保自定义安装器配置区域默认隐藏
+            const configArea = document.getElementById('installerConfigArea');
+            if (configArea) {
+                configArea.style.display = 'none';
+            }
+            
+            // 添加使用提示
+            const tips = [
+                '💡 提示：使用 Ctrl+S 保存偏好设置',
+                '💡 提示：使用 Ctrl+L 加载偏好设置',
+                '💡 提示：在输入框中按 Enter 键可快速跳转',
+                '💡 提示：支持文件拖拽上传'
+            ];
+            
+            // 随机显示一个提示
+            const randomTip = tips[Math.floor(Math.random() * tips.length)];
+            setTimeout(() => {
+                showSuccess(randomTip);
+            }, 1000);
+        });
+
+        // 增强功能：文件大小格式化
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 增强功能：输入验证增强
+        function validateInput(inputElement, pattern, errorMessage) {
+            const value = inputElement.value;
+            if (!pattern.test(value)) {
+                inputElement.style.borderColor = '#dc3545';
+                showInputWarning(errorMessage);
+                return false;
+            }
+            inputElement.style.borderColor = '#ddd';
+            return true;
+        }
+
+        // 增强功能：自动检测文件类型并设置默认值
+        function autoDetectAndSetDefaults() {
+            if (currentIsNeos !== null) {
+                // 根据文件类型设置默认分支
+                const branchInput = document.getElementById('branch');
+                if (!branchInput.value) {
+                    branchInput.value = currentIsNeos ? 'master' : 'release';
+                    updateBranchCounter();
+                }
+                
+                // 根据文件类型设置默认Loading消息
+                const loadingInput = document.getElementById('loadingMsg');
+                if (!loadingInput.value) {
+                    loadingInput.value = currentIsNeos ? 'Comma Two' : 'Comma Three';
+                    updateLoadingCounter();
+                }
+            }
+        }
+
+        // 在文件分析完成后调用
+        const originalAnalyzeFile = analyzeFile;
+        analyzeFile = function() {
+            originalAnalyzeFile();
+            autoDetectAndSetDefaults();
+        };
     </script>
 </body>
 </html>
