@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚗 OpenPilot 安装器编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 16px;
+            padding: 35px 30px;
+            text-align: center;
+            margin-bottom: 25px;
+            position: relative;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+        
+        .upload-area:hover::before {
+            opacity: 1;
+            transform: rotate(45deg) translate(50%, 50%);
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f2ff 0%, #e6eaff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .upload-area h3 {
+            margin-bottom: 8px;
+            font-size: 1.4em;
+            color: #333;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 18px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%);
+            border-radius: 15px;
+            border: 2px solid #28a745;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .download-btn:hover::before {
+            left: 100%;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 OpenPilot 安装器编辑器</h1>
+            <p>轻松自定义二进制安装器 - 支持自定义Git仓库、用户名、分支和安装信息</p>
+            
+            <!-- 调试开关 -->
+            <div style="text-align: right; margin-top: 10px;">
+                <label style="font-size: 14px; color: #666; margin-right: 15px;">
+                    <input type="checkbox" id="debugToggle" onchange="toggleDebug()" style="margin-right: 5px;">
+                    调试模式
+                </label>
+                <button id="downloadLogBtn" onclick="downloadDebugLog()" 
+                        style="display: none; font-size: 12px; padding: 6px 12px; background: #4299e1; color: white; border: none; border-radius: 6px; cursor: pointer; margin-left: 10px;">
+                    📥 下载调试日志
+                </button>
+            </div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div style="font-size: 3em; margin-bottom: 15px;">📁</div>
+            <h3 style="margin-bottom: 8px;">选择安装器文件</h3>
+            <p style="color: #666; margin-bottom: 15px;">
+                点击或拖拽上传二进制安装器文件<br>
+                支持: installer_openpilot_neos, installer_openpilot_agnos
+            </p>
+            <input type="file" id="fileInput" class="file-input" accept="*/*" />
+        </div>
+
+        <div class="info-card" id="fileInfo" style="display: none;">
+            <!-- 文件信息将在这里显示 -->
+        </div>
+
+        <div class="form-group">
+            <label for="gitHost">Git 主机地址: <span id="hostCounter" style="font-size: 0.9em; color: #666;">(0/100)</span></label>
+            <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="100" oninput="updateHostCounter()">
+            <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 60，最多100字符</div>
+        </div>
+
+        <div class="form-group">
+            <label for="username">用户名: <span id="usernameCounter" style="font-size: 0.9em; color: #666;">(0/55)</span></label>
+            <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="55" oninput="updateUsernameCounter()">
+            <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">AGNOS最多55字符，NEOS最多200字符</div>
+        </div>
+
+        <div class="form-group">
+            <label for="branch">分支名: <span id="branchCounter" style="font-size: 0.9em; color: #666;">(0/32)</span></label>
+            <input type="text" id="branch" placeholder="例如: master, release" maxlength="32" oninput="updateBranchCounter()">
+            <div id="branchHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议 ≤ 24 字符，最多32字符</div>
+        </div>
+
+        <div class="form-group">
+            <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/25)</span></label>
+            <input type="text" id="loadingMsg" placeholder="例如: Installing openpilot" maxlength="25" 
+                   oninput="updateLoadingCounter()" style="position: relative;">
+            <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                建议使用15-20个字符的简短消息
+            </div>
+        </div>
+
+        <button class="btn" onclick="generateInstaller()">🔧 生成自定义安装器</button>
+
+        <div id="result"></div>
+
+        <!-- 下载原始安装器区域 -->
+        <div class="download-section">
+            <h3 style="margin-bottom: 15px; color: #28a745;">📥 下载原始安装器</h3>
+            <p style="margin-bottom: 20px; color: #666;">
+                需要原始的二进制安装器文件？点击下方按钮下载官方版本
+            </p>
+            <a href="https://smiskol.com/fork/sshane" target="_blank" class="download-btn">
+                🚀 下载原始安装器
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let fileData = null;
+        let currentIsNeos = null;
+        let debugMode = false; // 调试开关
+        let debugLogs = []; // 调试日志收集
+
+        function toggleDebug() {
+            const debugToggle = document.getElementById('debugToggle');
+            debugMode = debugToggle ? debugToggle.checked : false;
+            
+            if (debugMode) {
+                debugLogs = [];
+                const startMsg = `=== 调试模式开启 ${new Date().toLocaleString()} ===`;
+                debugLogs.push(startMsg);
+                console.log(startMsg);
+            }
+            
+            const downloadBtn = document.getElementById('downloadLogBtn');
+            if (downloadBtn) {
+                downloadBtn.style.display = debugMode ? 'inline-block' : 'none';
+            }
+            
+            if (debugMode) {
+                debugLog('调试模式测试', '这是一条测试日志');
+            }
+        }
+
+        function debugLog(message, data = null) {
+            if (debugMode) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logMessage = `[${timestamp}] ${message}`;
+                if (data) {
+                    debugLogs.push(`${logMessage}: ${JSON.stringify(data, null, 2)}`);
+                    console.log(logMessage, data);
+                } else {
+                    debugLogs.push(logMessage);
+                    console.log(logMessage);
+                }
+            }
+        }
+
+        function downloadDebugLog() {
+            if (!debugMode) {
+                alert('请先开启调试模式');
+                return;
+            }
+            
+            if (debugLogs.length === 0) {
+                alert('暂无调试日志');
+                return;
+            }
+            
+            const logContent = debugLogs.join('\n');
+            const filename = `openpilot-installer-debug-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+            downloadFile(new TextEncoder().encode(logContent), filename);
+            alert(`调试日志已下载: ${filename}`);
+        }
+
+        function updateLoadingCounter() {
+            const loadingInput = document.getElementById('loadingMsg');
+            const counter = document.getElementById('loadingCounter');
+            const hint = document.getElementById('loadingHint');
+            
+            const currentLength = loadingInput.value.length;
+            const maxLength = 25;
+            
+            // 更新计数器
+            counter.textContent = `(${currentLength}/${maxLength})`;
+            
+            // 根据长度设置颜色和提示
+            if (currentLength === 0) {
+                counter.style.color = '#666';
+                hint.textContent = '建议使用15-20个字符的简短消息';
+                hint.style.color = '#666';
+                loadingInput.style.borderColor = '#ddd';
+            } else if (currentLength <= 15) {
+                counter.style.color = '#28a745';
+                hint.textContent = '✅ 长度理想，不会被截断';
+                hint.style.color = '#28a745';
+                loadingInput.style.borderColor = '#28a745';
+            } else if (currentLength <= 20) {
+                counter.style.color = '#17a2b8';
+                hint.textContent = '✅ 长度合适，安全范围内';
+                hint.style.color = '#17a2b8';
+                loadingInput.style.borderColor = '#17a2b8';
+            } else if (currentLength <= 23) {
+                counter.style.color = '#ffc107';
+                hint.textContent = '⚠️ 长度偏长，建议缩短';
+                hint.style.color = '#ffc107';
+                loadingInput.style.borderColor = '#ffc107';
+            } else if (currentLength <= 25) {
+                counter.style.color = '#fd7e14';
+                hint.textContent = '⚠️ 接近上限，可能在某些文件中被截断';
+                hint.style.color = '#fd7e14';
+                loadingInput.style.borderColor = '#fd7e14';
+            }
+        }
+
+        function updateHostCounter() {
+            const input = document.getElementById('gitHost');
+            const counter = document.getElementById('hostCounter');
+            const hint = document.getElementById('hostHint');
+            const len = input.value.length;
+            const max = parseInt(input.maxLength || '100', 10);
+            counter.textContent = `(${len}/${max})`;
+            if (len === 0) {
+                counter.style.color = '#666';
+                hint.style.color = '#666';
+                input.style.borderColor = '#ddd';
+            } else if (len <= 60) {
+                counter.style.color = '#28a745';
+                hint.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            } else if (len <= 80) {
+                counter.style.color = '#17a2b8';
+                hint.style.color = '#17a2b8';
+                input.style.borderColor = '#17a2b8';
+            } else if (len <= 90) {
+                counter.style.color = '#ffc107';
+                hint.style.color = '#ffc107';
+                input.style.borderColor = '#ffc107';
+            } else {
+                counter.style.color = '#fd7e14';
+                hint.style.color = '#fd7e14';
+                input.style.borderColor = '#fd7e14';
+            }
+        }
+
+        function updateUsernameCounter() {
+            const input = document.getElementById('username');
+            const counter = document.getElementById('usernameCounter');
+            const hint = document.getElementById('usernameHint');
+            const len = input.value.length;
+            const max = parseInt(input.maxLength || (currentIsNeos ? '200' : '55'), 10);
+            counter.textContent = `(${len}/${max})`;
+            if (len === 0) {
+                counter.style.color = '#666';
+                hint.style.color = '#666';
+                input.style.borderColor = '#ddd';
+            } else if (len <= Math.min(20, max * 0.3)) {
+                counter.style.color = '#28a745';
+                hint.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            } else if (len <= Math.min(40, max * 0.6)) {
+                counter.style.color = '#17a2b8';
+                hint.style.color = '#17a2b8';
+                input.style.borderColor = '#17a2b8';
+            } else if (len <= max * 0.85) {
+                counter.style.color = '#ffc107';
+                hint.style.color = '#ffc107';
+                input.style.borderColor = '#ffc107';
+            } else {
+                counter.style.color = '#fd7e14';
+                hint.style.color = '#fd7e14';
+                input.style.borderColor = '#fd7e14';
+            }
+        }
+
+        function updateBranchCounter() {
+            const input = document.getElementById('branch');
+            const counter = document.getElementById('branchCounter');
+            const hint = document.getElementById('branchHint');
+            const len = input.value.length;
+            const max = parseInt(input.maxLength || '32', 10);
+            counter.textContent = `(${len}/${max})`;
+            if (len === 0) {
+                counter.style.color = '#666';
+                hint.style.color = '#666';
+                input.style.borderColor = '#ddd';
+            } else if (len <= 16) {
+                counter.style.color = '#28a745';
+                hint.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            } else if (len <= 24) {
+                counter.style.color = '#17a2b8';
+                hint.style.color = '#17a2b8';
+                input.style.borderColor = '#17a2b8';
+            } else if (len <= 30) {
+                counter.style.color = '#ffc107';
+                hint.style.color = '#ffc107';
+                input.style.borderColor = '#ffc107';
+            } else {
+                counter.style.color = '#fd7e14';
+                hint.style.color = '#fd7e14';
+                input.style.borderColor = '#fd7e14';
+            }
+        }
+
+        // 设置上传区域
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                loadFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                loadFile(files[0]);
+            }
+        }
+
+        function loadFile(file) {
+            currentFile = file;
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `
+                <strong>文件名:</strong> ${file.name}<br>
+                <strong>大小:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                <strong>类型:</strong> 正在识别...
+            `;
+            fileInfo.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fileData = new Uint8Array(e.target.result);
+                analyzeFile();
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function detectFileType(data, filename) {
+            debugLog('开始检测文件类型', { filename, dataLength: data.length });
+            
+            // 将部分数据转换为字符串进行特征检测
+            const searchLength = Math.min(data.length, 5000);
+            const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
+            
+            // 优先检查系统级特征
+            if (dataStr.includes('__android_log') || dataStr.includes('/system/bin/linker64')) {
+                debugLog('检测到NEOS特征', 'Android系统级特征');
+                return true; // NEOS
+            }
+            
+            if (dataStr.includes('libQt') || dataStr.includes('/lib/ld-linux')) {
+                debugLog('检测到AGNOS特征', 'Ubuntu系统级特征');
+                return false; // AGNOS
+            }
+            
+            // 检查通用Android特征
+            if (dataStr.toLowerCase().includes('android')) {
+                debugLog('检测到Android特征', '通用Android标识');
+                return true; // NEOS
+            }
+            
+            // 默认为AGNOS
+            debugLog('默认识别为AGNOS', '未找到明确特征');
+            return false; // AGNOS
+        }
+
+        function extractCurrentStrings(data, isNeos) {
+            debugLog('开始提取字符串', { isNeos, type: isNeos ? 'NEOS' : 'AGNOS' });
+            
+            const result = {
+                host: null,
+                username: null,
+                branch: null,
+                loading: null
+            };
+            
+            try {
+                // 先进行诊断性搜索
+                debugFileContent(data);
+                
+                // 提取Git URL和主机
+                const gitUrl = extractGitUrl(data, isNeos);
+                if (gitUrl) {
+                    debugLog('提取到Git URL', gitUrl);
+                    if (gitUrl.includes('://')) {
+                        const urlParts = gitUrl.split('://')[1];
+                        if (urlParts && urlParts.includes('/')) {
+                            const hostPart = urlParts.split('/')[0];
+                            const usernamePart = urlParts.split('/')[1];
+                            result.host = hostPart;
+                            result.username = usernamePart;
+                        }
+                    }
+                }
+                
+                // 提取分支名
+                result.branch = extractBranchFromBinary(data, isNeos);
+                
+                // 提取Loading消息
+                result.loading = extractLoadingString(data);
+                
+                debugLog('字符串提取完成', result);
+                return result;
+                
+            } catch (error) {
+                debugLog('字符串提取出错', error.message);
+                return result;
+            }
+        }
+
+        function debugFileContent(data) {
+            const searchLength = Math.min(data.length, 10000);
+            let dataStr;
+            
+            try {
+                dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
+            } catch (error) {
+                debugLog('文件内容诊断失败', error.message);
+                return;
+            }
+            
+            const diagnostics = {
+                hasHttps: dataStr.includes('https://'),
+                hasGithub: dataStr.includes('github.com'),
+                hasGit: dataStr.includes('git '),
+                hasGitClone: dataStr.includes('git clone'),
+                hasGitCheckout: dataStr.includes('git checkout'),
+                hasGitReset: dataStr.includes('git reset'),
+                hasInstalling: dataStr.includes('Installing'),
+                hasOpenpilot: dataStr.includes('openpilot'),
+                firstHttpsIndex: dataStr.indexOf('https://'),
+                firstGitIndex: dataStr.indexOf('git '),
+                firstGitCloneIndex: dataStr.indexOf('git clone'),
+                firstGitCheckoutIndex: dataStr.indexOf('git checkout'),
+                firstInstallingIndex: dataStr.indexOf('Installing')
+            };
+            
+            debugLog('文件内容诊断', diagnostics);
+            
+            // 提取关键片段
+            if (diagnostics.firstHttpsIndex !== -1) {
+                const httpsContext = dataStr.substring(diagnostics.firstHttpsIndex, diagnostics.firstHttpsIndex + 100);
+                debugLog('找到HTTPS上下文', httpsContext);
+            }
+            
+            if (diagnostics.firstGitCloneIndex !== -1) {
+                const cloneContext = dataStr.substring(diagnostics.firstGitCloneIndex, diagnostics.firstGitCloneIndex + 150);
+                debugLog('找到Git Clone上下文', cloneContext);
+            }
+            
+            if (diagnostics.firstGitCheckoutIndex !== -1) {
+                const checkoutContext = dataStr.substring(diagnostics.firstGitCheckoutIndex, diagnostics.firstGitCheckoutIndex + 50);
+                debugLog('找到Git Checkout上下文', checkoutContext);
+            }
+            
+            if (diagnostics.firstInstallingIndex !== -1) {
+                const installingContext = dataStr.substring(diagnostics.firstInstallingIndex, diagnostics.firstInstallingIndex + 50);
+                debugLog('找到Installing上下文', installingContext);
+            }
+            
+            // 字节级搜索git命令
+            const gitCommands = ['git clone ', 'git checkout ', 'git reset --hard origin/', 'git fetch origin '];
+            for (const command of gitCommands) {
+                const commandBytes = new TextEncoder().encode(command);
+                const index = findBytesPattern(data, commandBytes);
+                if (index !== -1) {
+                    debugLog(`字节级找到${command}`, { position: index });
+                }
+            }
+        }
+
+        function extractGitUrl(data, isNeos = null) {
+            debugLog('Git URL提取开始', { isNeos, dataLength: data.length });
+            
+            // 如果明确指定是NEOS类型，优先从git clone命令中提取
+            if (isNeos === true) {
+                const cloneBytes = new TextEncoder().encode('git clone ');
+                const cloneIndex = findBytesPattern(data, cloneBytes);
+                if (cloneIndex !== -1) {
+                    debugLog('NEOS找到git clone命令', { position: cloneIndex });
+                    
+                    let urlStart = cloneIndex + cloneBytes.length;
+                    let urlEnd = urlStart;
+                    
+                    // 查找URL结束位置（到.git或空格）
+                    while (urlEnd < data.length && urlEnd < cloneIndex + 200 && 
+                           data[urlEnd] !== 32 && data[urlEnd] !== 10 && data[urlEnd] !== 13 &&
+                           data[urlEnd] !== 0 && data[urlEnd] >= 32 && data[urlEnd] <= 126) {
+                        urlEnd++;
+                        
+                        // 如果遇到.git，继续读取直到找到完整的.git结尾
+                        if (urlEnd >= urlStart + 4) {
+                            try {
+                                const currentStr = new TextDecoder().decode(data.slice(urlStart, urlEnd));
+                                if (currentStr.endsWith('.git')) {
+                                    debugLog('NEOS提取到Git URL', currentStr);
+                                    return currentStr;
+                                }
+                            } catch (e) {
+                                // 解码错误，继续查找
+                            }
+                        }
+                    }
+                    
+                    // 备用方案：提取到空格前的内容，然后查找.git结尾
+                    if (urlEnd > urlStart + 10) {
+                        try {
+                            const fullStr = new TextDecoder().decode(data.slice(urlStart, urlEnd));
+                            const gitMatch = fullStr.match(/(https?:\/\/[^\/\s]+\/[^\/\s]+\/[^\s]+\.git)/);
+                            if (gitMatch) {
+                                debugLog('NEOS备用方案找到Git URL', gitMatch[1]);
+                                return gitMatch[1];
+                            }
+                        } catch (e) {
+                            debugLog('NEOS备用方案解码失败', e.message);
+                        }
+                    }
+                }
+            }
+            
+            // 通用方法：字节级搜索独立的Git URL模式 (https://xxx/xxx/openpilot.git)
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            for (let i = 0; i < data.length - 20; i++) {
+                try {
+                    // 查找 "http" 字节序列: 104, 116, 116, 112
+                    if (data[i] === 104 && data[i+1] === 116 && data[i+2] === 116 && data[i+3] === 112) {
+                        let end = i;
+                        // 查找URL结束位置
+                        while (end < data.length && end < i + 200 && 
+                               data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
+                            end++;
+                        }
+                        
+                        if (end > i + 10) {
+                            const str = decoder.decode(data.slice(i, end));
+                            // 检查是否是openpilot Git URL
+                            if (str.includes('openpilot.git')) {
+                                debugLog('字节级搜索找到Git URL', str);
+                                return str;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // 忽略解码错误
+                }
+            }
+            
+            debugLog('未找到Git URL', '搜索完成');
+            return null;
+        }
+
+        function extractBranchFromBinary(data, isNeos) {
+            debugLog('分支提取开始', { isNeos, dataLength: data.length });
+            
+            // 根据文件类型使用不同的分支提取策略
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            
+            if (isNeos) {
+                // NEOS类型：从 "git clone ... -b branchname" 命令中提取
+                const cloneBranch = extractBranchFromCloneCommand(data);
+                if (cloneBranch) {
+                    debugLog('NEOS从clone命令提取分支', cloneBranch);
+                    return cloneBranch;
+                }
+            } else {
+                // AGNOS类型：从独立的git命令中提取（字节级搜索）
+                const gitCommands = ['git checkout ', 'git reset --hard origin/', 'git fetch origin '];
+                
+                for (const command of gitCommands) {
+                    const commandBytes = new TextEncoder().encode(command);
+                    const index = findBytesPattern(data, commandBytes);
+                    if (index !== -1) {
+                        debugLog('AGNOS找到git命令', { command, position: index });
+                        
+                        // 找到命令，提取后面的分支名
+                        const start = index + commandBytes.length;
+                        let end = start;
+                        
+                        // 查找分支名结束位置
+                        while (end < data.length && end < start + 50 && 
+                               data[end] !== 0 && data[end] !== 32 && data[end] !== 10 && data[end] !== 13 &&
+                               data[end] >= 32 && data[end] <= 126) {
+                            end++;
+                        }
+                        
+                        if (end > start) {
+                            const branchName = decoder.decode(data.slice(start, end));
+                            if (branchName && /^[a-zA-Z0-9._-]+$/.test(branchName)) {
+                                debugLog('AGNOS提取到分支名', branchName);
+                                return branchName;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 通用备用方法：查找其他git命令中的分支信息（字节级）
+            const gitCommands = ['git checkout ', 'git fetch origin ', 'git reset --hard origin/'];
+            
+            for (const command of gitCommands) {
+                const commandBytes = new TextEncoder().encode(command);
+                const index = findBytesPattern(data, commandBytes);
+                if (index !== -1) {
+                    debugLog('备用方案找到git命令', { command, position: index });
+                    
+                    // 找到命令，提取后面的分支名
+                    const start = index + commandBytes.length;
+                    let end = start;
+                    
+                    // 查找分支名结束位置
+                    while (end < data.length && end < start + 30 && 
+                           data[end] !== 0 && data[end] !== 10 && data[end] !== 13 && data[end] >= 32) {
+                        end++;
+                    }
+                    
+                    if (end > start) {
+                        const branch = decoder.decode(data.slice(start, end));
+                        if (branch.trim()) {
+                            debugLog('备用方案提取到分支', branch.trim());
+                            return branch.trim();
+                        }
+                    }
+                }
+            }
+            
+            debugLog('未找到分支', '搜索完成');
+            return null;
+        }
+
+        function extractBranchFromCloneCommand(data) {
+            // 专门提取 "git clone ... -b branchname" 中的分支名
+            debugLog('开始提取clone命令中的分支');
+            
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            
+            // 查找 "git clone" 命令（字节级搜索）
+            const cloneBytes = new TextEncoder().encode('git clone ');
+            const cloneIndex = findBytesPattern(data, cloneBytes);
+            
+            if (cloneIndex !== -1) {
+                debugLog('找到git clone命令', { position: cloneIndex });
+                
+                // 找到git clone命令，查找整行命令
+                let lineEnd = cloneIndex;
+                while (lineEnd < data.length && lineEnd < cloneIndex + 500 && 
+                       data[lineEnd] !== 0 && data[lineEnd] !== 10 && data[lineEnd] !== 13) {
+                    lineEnd++;
+                }
+                
+                if (lineEnd > cloneIndex + 20) {
+                    const cmdLine = decoder.decode(data.slice(cloneIndex, lineEnd));
+                    debugLog('git clone命令行', cmdLine);
+                    
+                    // 查找 "-b branchname" 模式
+                    const branchMatch = cmdLine.match(/-b\s+([a-zA-Z0-9._-]+)/);
+                    if (branchMatch) {
+                        debugLog('从clone命令提取分支', branchMatch[1]);
+                        return branchMatch[1];
+                    }
+                    
+                    // 备用方案：查找可能被换行分割的分支名
+                    const bIndex = cmdLine.indexOf('-b');
+                    if (bIndex !== -1) {
+                        const afterB = cmdLine.substring(bIndex + 2).trim();
+                        const branchPart = afterB.split(/\s+/)[0];
+                        if (branchPart && /^[a-zA-Z0-9._-]+$/.test(branchPart)) {
+                            debugLog('备用方案提取分支', branchPart);
+                            return branchPart;
+                        }
+                    }
+                }
+            }
+            
+            debugLog('clone命令中未找到分支');
+            return null;
+        }
+
+        function extractLoadingString(data) {
+            debugLog('Loading消息提取开始', { dataLength: data.length });
+            
+            // 查找"Installing "字符串（字节级搜索）
+            const installingBytes = new TextEncoder().encode('Installing ');
+            const index = findBytesPattern(data, installingBytes);
+            
+            if (index !== -1) {
+                debugLog('找到Installing字节位置', { position: index });
+                
+                // 找到"Installing "，提取后面的内容
+                const start = index;
+                let end = start + installingBytes.length;
+                
+                // 查找加载信息结束位置（到null字节或不可打印字符）
+                while (end < data.length && end < start + 100 && 
+                       data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
+                    end++;
+                }
+                
+                if (end > start + installingBytes.length) {
+                    try {
+                        const decoder = new TextDecoder('utf-8', { fatal: false });
+                        const loadingMsg = decoder.decode(data.slice(start, end));
+                        debugLog('字节级搜索找到Loading消息', loadingMsg);
+                        return loadingMsg.trim();
+                    } catch (error) {
+                        debugLog('Loading消息解码失败', error.message);
+                    }
+                }
+            }
+            
+            // 备用方案：字符串搜索
+            try {
+                const searchLength = Math.min(data.length, 10000);
+                const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
+                
+                if (dataStr.includes('Installing')) {
+                    const installingIndex = dataStr.indexOf('Installing');
+                    const context = dataStr.substring(installingIndex, installingIndex + 50);
+                    debugLog('备用方案找到Installing上下文', context);
+                    
+                    // 提取Installing后的内容
+                    const simpleMatch = context.match(/Installing\s+([^\x00\n\r]+)/);
+                    if (simpleMatch) {
+                        const message = 'Installing ' + simpleMatch[1].trim();
+                        debugLog('备用方案找到Loading消息', message);
+                        return message;
+                    }
+                }
+            } catch (error) {
+                debugLog('备用方案失败', error.message);
+            }
+            
+            debugLog('未找到Loading消息', '搜索完成');
+            return null;
+        }
+
+        function analyzeFile() {
+            if (!fileData) return;
+            
+            debugLog('开始分析文件', { 
+                fileName: currentFile.name, 
+                fileSize: currentFile.size 
+            });
+            
+            // 检测文件类型
+            const isNeos = detectFileType(fileData, currentFile.name);
+            currentIsNeos = isNeos;
+            debugLog('文件类型检测', { isNeos, type: isNeos ? 'NEOS' : 'AGNOS' });
+            
+            // 提取当前字符串
+            const currentStrings = extractCurrentStrings(fileData, isNeos);
+            debugLog('提取到的字符串', currentStrings);
+            
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `
+                <strong>文件名:</strong> ${currentFile.name}<br>
+                <strong>大小:</strong> ${(currentFile.size / 1024 / 1024).toFixed(2)} MB<br>
+                <strong>类型:</strong> ${isNeos ? 'NEOS (Android)' : 'AGNOS (Ubuntu)'}<br>
+                <strong>当前Git主机:</strong> ${currentStrings.host || '未检测到'}<br>
+                <strong>当前用户名:</strong> ${currentStrings.username || '未检测到'}<br>
+                <strong>当前分支:</strong> ${currentStrings.branch || '未检测到'}<br>
+                <strong>当前Loading消息:</strong> ${currentStrings.loading || '未检测到'}<br>
+                <strong>状态:</strong> ✅ 文件加载成功，可以开始编辑
+            `;
+            
+            // 设置默认值或当前值
+            document.getElementById('gitHost').value = currentStrings.host || 'github.com';
+            document.getElementById('username').value = currentStrings.username || 'commaai';
+            document.getElementById('branch').value = currentStrings.branch || (isNeos ? 'master' : 'release');
+            document.getElementById('loadingMsg').value = currentStrings.loading || 'Installing openpilot';
+            
+            // 更新Loading消息计数器
+            updateLoadingCounter();
+
+            // 动态设置用户名最大长度（AGNOS:55, NEOS:200）并更新计数器
+            const usernameInput = document.getElementById('username');
+            const usernameCounter = document.getElementById('usernameCounter');
+            const usernameHint = document.getElementById('usernameHint');
+            if (currentIsNeos) {
+                usernameInput.maxLength = 200;
+                usernameCounter.textContent = `(${usernameInput.value.length}/200)`;
+                usernameHint.textContent = 'NEOS最多200字符';
+            } else {
+                usernameInput.maxLength = 55;
+                usernameCounter.textContent = `(${usernameInput.value.length}/55)`;
+                usernameHint.textContent = 'AGNOS最多55字符';
+            }
+            updateUsernameCounter();
+            updateHostCounter();
+            updateBranchCounter();
+        }
+
+        function generateInstaller() {
+            if (!fileData) {
+                alert('请先选择安装器文件');
+                return;
+            }
+
+            const host = document.getElementById('gitHost').value;
+            const username = document.getElementById('username').value;
+            const branch = document.getElementById('branch').value;
+            const loadingMsg = document.getElementById('loadingMsg').value;
+
+            if (!host || !username || !branch || !loadingMsg) {
+                alert('请填写所有字段');
+                return;
+            }
+
+            // 前端已限制长度，这里只做最后检查
+            if (loadingMsg.length > 25) {
+                alert('⚠️ Loading消息长度超限，请修改为25字符以内');
+                return;
+            }
+
+            debugLog('开始生成自定义安装器', { host, username, branch, loadingMsg });
+
+            try {
+                // 检测文件类型
+                const isNeos = detectFileType(fileData, currentFile.name);
+                debugLog('文件类型', { isNeos, type: isNeos ? 'NEOS' : 'AGNOS' });
+                
+                // 创建数据副本
+                const modifiedData = new Uint8Array(fileData);
+                debugLog('创建数据副本', `大小: ${modifiedData.length} 字节`);
+                
+                // 执行字符串替换
+                const result = modifyBinary(modifiedData, host, username, branch, loadingMsg, isNeos);
+                debugLog('修改结果', result);
+                
+                const filename = `installer_openpilot_custom_${username}_${Date.now()}`;
+                downloadFile(modifiedData, filename);
+                
+                const truncationWarnings = [];
+                if (!result.loadingResult) truncationWarnings.push('Loading消息可能被截断');
+                if (!result.hostResult) truncationWarnings.push('Git URL可能被截断');
+                if (!result.branchResult) truncationWarnings.push('分支名可能替换失败');
+                
+                const warningText = truncationWarnings.length > 0 ? 
+                    `\n\n⚠️ 注意: ${truncationWarnings.join(', ')}` : '';
+                
+                const successMsg = `✅ 自定义安装器生成成功！
+
+HOST替换: ${result.hostResult ? '✅' : '⚠️ 可能截断'}
+USERNAME替换: ${result.usernameResult ? '✅' : '⚠️ 可能截断'}  
+LOADING替换: ${result.loadingResult ? '✅' : '⚠️ 可能截断'}
+BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
+                
+                showSuccess(successMsg);
+                debugLog('安装器生成完成', '文件已下载');
+                
+            } catch (error) {
+                showError('❌ 生成失败: ' + error.message);
+                debugLog('生成失败', error);
+            }
+        }
+
+        function modifyBinary(data, host, username, branch, loadingMsg, isNeos) {
+            debugLog('开始修改二进制文件', {
+                host, username, branch, loadingMsg, 
+                isNeos, fileSize: data.length
+            });
+            
+            let hostResult = false;
+            let usernameResult = false; 
+            let loadingResult = false;
+            let branchResult = false;
+            
+            try {
+                // 构建新的Git URL
+                const newGitUrl = `https://${host}/${username}/openpilot.git`;
+                debugLog('构建新Git URL', newGitUrl);
+                
+                // 查找并替换Git URL
+                const currentGitUrl = extractGitUrl(data, isNeos);
+                if (currentGitUrl) {
+                    debugLog('找到当前Git URL', currentGitUrl);
+                    hostResult = replaceStringInBinary(data, currentGitUrl, newGitUrl);
+                    usernameResult = hostResult; // Git URL包含用户名
+                } else {
+                    debugLog('未找到Git URL', '跳过URL替换');
+                }
+                
+                // 查找并替换Loading消息
+                const currentLoadingMsg = extractLoadingString(data);
+                if (currentLoadingMsg && loadingMsg !== currentLoadingMsg) {
+                    debugLog('找到当前Loading消息', currentLoadingMsg);
+                    if (isNeos) {
+                        // NEOS: 直接使用null填充逻辑
+                        loadingResult = replaceStringInBinary(data, currentLoadingMsg, loadingMsg);
+                    } else {
+                        // AGNOS: 使用空格+最后null的逻辑
+                        loadingResult = replaceAgnosLoadingMessage(data, currentLoadingMsg, loadingMsg);
+                    }
+                } else {
+                    debugLog('Loading消息未变化或未找到', '跳过Loading替换');
+                    loadingResult = true; // 未变化视为成功
+                }
+                
+                // 查找并替换分支名
+                const currentBranch = extractBranchFromBinary(data, isNeos);
+                if (currentBranch && branch !== currentBranch) {
+                    debugLog('找到当前分支', currentBranch);
+                    branchResult = replaceBranchInBinary(data, currentBranch, branch, isNeos);
+                } else {
+                    debugLog('分支未变化或未找到', '跳过分支替换');
+                    branchResult = true; // 未变化视为成功
+                }
+                
+            } catch (error) {
+                debugLog('修改过程出错', error.message);
+            }
+            
+            const result = { hostResult, usernameResult, loadingResult, branchResult };
+            debugLog('修改完成', result);
+            return result;
+        }
+
+        // AGNOS专用：替换Loading消息，采用空格填充+最后null的布局
+        function replaceAgnosLoadingMessage(data, oldStr, newStr) {
+            try {
+                const oldBytes = new TextEncoder().encode(oldStr);
+                const pos = findBytesPattern(data, oldBytes);
+                if (pos === -1) {
+                    debugLog('AGNOS Loading查找失败', oldStr);
+                    return false;
+                }
+
+                // 计算可用空间：原消息后连续的空格(0x20)直到一个最终的null(0x00)，将该null包含在内
+                let end = pos + oldBytes.length;
+                while (end < data.length && data[end] === 0x20) {
+                    end++;
+                }
+                if (end < data.length && data[end] === 0x00) {
+                    end++; // 包含最后一个null
+                }
+                const maxLen = end - pos;
+                if (maxLen <= 0) {
+                    debugLog('AGNOS Loading空间异常', { pos, end });
+                    return false;
+                }
+
+                const newBytes = new TextEncoder().encode(newStr);
+                let willTruncate = false;
+                let writeLen = Math.min(newBytes.length, Math.max(0, maxLen - 1)); // 预留最后一个null
+                if (newBytes.length > maxLen - 1) {
+                    willTruncate = true;
+                }
+
+                // 写入新消息
+                for (let i = 0; i < writeLen; i++) {
+                    data[pos + i] = newBytes[i];
+                }
+                // 用空格填充直到最后一个字节
+                for (let i = pos + writeLen; i < pos + maxLen - 1; i++) {
+                    data[i] = 0x20;
+                }
+                // 最后一个字节置null
+                data[pos + maxLen - 1] = 0x00;
+
+                if (willTruncate) {
+                    const truncated = new TextDecoder().decode(newBytes.slice(0, writeLen));
+                    debugLog('AGNOS Loading发生截断', { original: newStr, truncated, maxLen });
+                } else {
+                    debugLog('AGNOS Loading替换完成', { newStr, maxLen });
+                }
+                return true;
+            } catch (e) {
+                debugLog('AGNOS Loading替换异常', e.message);
+                return false;
+            }
+        }
+
+        function replaceStringInBinary(data, oldStr, newStr) {
+            if (!oldStr || !newStr) {
+                debugLog('字符串为空', { oldStr, newStr });
+                return false;
+            }
+            
+            const oldBytes = new TextEncoder().encode(oldStr);
+            const newBytes = new TextEncoder().encode(newStr);
+            
+            // 查找字符串位置
+            let pos = findBytesPattern(data, oldBytes);
+            if (pos === -1) {
+                debugLog('未找到字符串', oldStr.substring(0, 50));
+                return false;
+            }
+            
+            debugLog('找到字符串位置', { pos, oldLength: oldBytes.length, newLength: newBytes.length });
+            
+            // 检查可用空间（扫描后续的null字节）
+            let availableLength = oldBytes.length;
+            for (let i = pos + oldBytes.length; i < data.length; i++) {
+                if (data[i] === 0x00) {
+                    availableLength++;
+                } else {
+                    break;
+                }
+            }
+            
+            debugLog('可用空间分析', { 
+                oldLength: oldBytes.length, 
+                newLength: newBytes.length, 
+                availableLength 
+            });
+            
+            if (newBytes.length > availableLength) {
+                // 智能截断：尽量保持单词完整
+                let truncatedStr = newStr;
+                let truncatedBytes = newBytes;
+                
+                // 如果空间不足，尝试智能截断
+                if (availableLength > 10) {
+                    // 保留一个字节用于null终止符
+                    const maxTextLength = availableLength - 1;
+                    truncatedStr = newStr.substring(0, maxTextLength);
+                    
+                    // 尝试在单词边界截断
+                    const lastSpace = truncatedStr.lastIndexOf(' ');
+                    if (lastSpace > truncatedStr.length * 0.7) {
+                        truncatedStr = truncatedStr.substring(0, lastSpace);
+                    }
+                    
+                    truncatedBytes = new TextEncoder().encode(truncatedStr);
+                    
+                    // 如果编码后还是过长，强制截断到可用空间
+                    if (truncatedBytes.length >= availableLength) {
+                        truncatedBytes = truncatedBytes.slice(0, availableLength - 1);
+                        truncatedStr = new TextDecoder().decode(truncatedBytes);
+                    }
+                } else {
+                    // 空间太小，直接截断
+                    truncatedBytes = newBytes.slice(0, availableLength);
+                    truncatedStr = new TextDecoder().decode(truncatedBytes);
+                }
+                
+                debugLog('字符串过长，智能截断', { 
+                    original: newStr,
+                    originalLength: newStr.length,
+                    truncated: truncatedStr,
+                    truncatedLength: truncatedStr.length,
+                    availableSpace: availableLength,
+                    truncationType: availableLength > 10 ? '智能截断' : '强制截断'
+                });
+                
+                // 替换数据
+                for (let i = 0; i < truncatedBytes.length; i++) {
+                    data[pos + i] = truncatedBytes[i];
+                }
+                // 填充剩余空间为null
+                for (let i = truncatedBytes.length; i < availableLength; i++) {
+                    data[pos + i] = 0x00;
+                }
+                
+                // 返回false表示有截断发生，让用户知道
+                debugLog('截断警告', `消息被截断: "${newStr}" → "${truncatedStr}"`);
+                return false;
+            } else {
+                // 正常替换
+                for (let i = 0; i < newBytes.length; i++) {
+                    data[pos + i] = newBytes[i];
+                }
+                // 填充剩余空间为null
+                for (let i = newBytes.length; i < availableLength; i++) {
+                    data[pos + i] = 0x00;
+                }
+            }
+            
+            debugLog('字符串替换完成', '成功');
+            return true;
+        }
+
+        function replaceBranchInBinary(data, oldBranch, newBranch, isNeos) {
+            debugLog('开始替换分支', { oldBranch, newBranch, isNeos });
+            
+            const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, 10000));
+            let success = false;
+            
+            if (isNeos) {
+                // NEOS: 在git clone命令中替换分支
+                const pattern = `git clone`;
+                const branchPattern = `-b ${oldBranch}`;
+                const newBranchStr = `-b ${newBranch}`;
+                
+                if (dataStr.includes(branchPattern)) {
+                    success = replaceStringInBinary(data, branchPattern, newBranchStr);
+                }
+            } else {
+                // AGNOS: 在git checkout命令中替换分支
+                const checkoutPattern = `git checkout ${oldBranch}`;
+                const newCheckoutStr = `git checkout ${newBranch}`;
+                
+                if (dataStr.includes(checkoutPattern)) {
+                    success = replaceStringInBinary(data, checkoutPattern, newCheckoutStr);
+                }
+                
+                // 也尝试替换git reset命令中的分支
+                const resetPattern = `git reset --hard origin/${oldBranch}`;
+                const newResetStr = `git reset --hard origin/${newBranch}`;
+                
+                if (dataStr.includes(resetPattern)) {
+                    const resetSuccess = replaceStringInBinary(data, resetPattern, newResetStr);
+                    success = success || resetSuccess;
+                }
+            }
+            
+            debugLog('分支替换结果', success ? '成功' : '失败');
+            return success;
+        }
+
+        function findBytesPattern(data, pattern) {
+            for (let i = 0; i <= data.length - pattern.length; i++) {
+                let found = true;
+                for (let j = 0; j < pattern.length; j++) {
+                    if (data[i + j] !== pattern[j]) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) return i;
+            }
+            return -1;
+        }
+
+        function downloadFile(data, filename) {
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function showSuccess(message) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="success" style="margin-top: 20px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px;">${message}</div>`;
+        }
+
+        function showError(message) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="error" style="margin-top: 20px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px;">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
