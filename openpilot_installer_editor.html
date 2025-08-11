@@ -290,13 +290,13 @@
             </div>
 
             <div class="form-group">
-                <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/38)</span></label>
-                                <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="38" 
+                <label for="loadingMsg">安装信息: <span id="loadingCounter" style="font-size: 0.9em; color: #666;">(0/39)</span></label>
+                                <input type="text" id="loadingMsg" placeholder="例如: openpilot (Installing前缀会自动添加)" maxlength="39" 
                        oninput="validateLoadingInput(this)" style="position: relative;">
                 <div id="loadingHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">
                     建议使用15-20个字符的简短消息<br>
                     <span style="color: #e74c3c;">⚠️ 注意：只允许输入英文字母、数字、空格和常用符号</span><br>
-                    <span style="color: #3498db;">📏 限制：最多38字符（Installing前缀会自动添加，总长度48字符）</span>
+                    <span style="color: #3498db;">📏 限制：最多39字符（Installing前缀会自动添加，总长度48字符）</span>
                 </div>
             </div>
 
@@ -304,6 +304,8 @@
         </div>
 
         <div id="result"></div>
+
+
 
         <!-- 下载原始安装器区域 -->
         <div class="download-section">
@@ -381,7 +383,7 @@
 
         // 常量定义，提高可维护性
         const LOADING_CONFIG = {
-            MAX_LENGTH: 38,
+            MAX_LENGTH: 39,
             PREFIX: 'Installing ',
             IDEAL_LENGTH: 15,
             GOOD_LENGTH: 20,
@@ -478,7 +480,7 @@
             const counter = document.getElementById('branchCounter');
             const hint = document.getElementById('branchHint');
             const len = input.value.length;
-            const max = parseInt(input.maxLength || BRANCH_CONFIG.MAX_LENGTH.toString(), 10);
+            const max = parseInt(input.maxLength || BRANCH_CONFIG.MAX_LENGTH.toString(), 16);
             
             counter.textContent = `(${len}/${max})`;
             
@@ -673,7 +675,7 @@
             debugLog('开始检测文件类型', { filename, dataLength: data.length });
             
             // 将部分数据转换为字符串进行特征检测
-            const searchLength = Math.min(data.length, 10000); // 增加搜索范围
+            const searchLength = Math.min(data.length, 0x2710); // 增加搜索范围 (10000)
             const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
             
             let neosScore = 0;
@@ -819,7 +821,7 @@
         }
 
         function debugFileContent(data) {
-            const searchLength = Math.min(data.length, 10000);
+            const searchLength = Math.min(data.length, 0x2710);
             let dataStr;
             
             try {
@@ -849,22 +851,22 @@
             
             // 提取关键片段
             if (diagnostics.firstHttpsIndex !== -1) {
-                const httpsContext = dataStr.substring(diagnostics.firstHttpsIndex, diagnostics.firstHttpsIndex + 100);
+                const httpsContext = dataStr.substring(diagnostics.firstHttpsIndex, diagnostics.firstHttpsIndex + 0x64);
                 debugLog('找到HTTPS上下文', httpsContext);
             }
             
             if (diagnostics.firstGitCloneIndex !== -1) {
-                const cloneContext = dataStr.substring(diagnostics.firstGitCloneIndex, diagnostics.firstGitCloneIndex + 150);
+                const cloneContext = dataStr.substring(diagnostics.firstGitCloneIndex, diagnostics.firstGitCloneIndex + 0x96);
                 debugLog('找到Git Clone上下文', cloneContext);
             }
             
             if (diagnostics.firstGitCheckoutIndex !== -1) {
-                const checkoutContext = dataStr.substring(diagnostics.firstGitCheckoutIndex, diagnostics.firstGitCheckoutIndex + 50);
+                const checkoutContext = dataStr.substring(diagnostics.firstGitCheckoutIndex, diagnostics.firstGitCheckoutIndex + 0x32);
                 debugLog('找到Git Checkout上下文', checkoutContext);
             }
             
             if (diagnostics.firstInstallingIndex !== -1) {
-                const installingContext = dataStr.substring(diagnostics.firstInstallingIndex, diagnostics.firstInstallingIndex + 50);
+                const installingContext = dataStr.substring(diagnostics.firstInstallingIndex, diagnostics.firstInstallingIndex + 0x32);
                 debugLog('找到Installing上下文', installingContext);
             }
             
@@ -876,7 +878,7 @@
                 if (index !== -1) {
                     const endIndex = index + commandBytes.length - 1;
                     debugLog(`字节级找到${command}`, { 
-                        position: index,
+                        position: `0x${index.toString(16).toUpperCase()}`,
                         hexAddress: `0x${index.toString(16).toUpperCase()}`,
                         range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
                         size: commandBytes.length
@@ -895,7 +897,7 @@
                 if (cloneIndex !== -1) {
                     const endIndex = cloneIndex + cloneBytes.length - 1;
                     debugLog('NEOS找到git clone命令', { 
-                        position: cloneIndex,
+                        position: `0x${cloneIndex.toString(16).toUpperCase()}`,
                         hexAddress: `0x${cloneIndex.toString(16).toUpperCase()}`,
                         range: `0x${cloneIndex.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
                         size: cloneBytes.length
@@ -905,7 +907,7 @@
                     let urlEnd = urlStart;
                     
                     // 查找URL结束位置（到.git或空格）
-                    while (urlEnd < data.length && urlEnd < cloneIndex + 200 && 
+                    while (urlEnd < data.length && urlEnd < cloneIndex + 0xC8 && 
                            data[urlEnd] !== 32 && data[urlEnd] !== 10 && data[urlEnd] !== 13 &&
                            data[urlEnd] !== 0 && data[urlEnd] >= 32 && data[urlEnd] <= 126) {
                         urlEnd++;
@@ -925,7 +927,7 @@
                     }
                     
                     // 备用方案：提取到空格前的内容，然后查找.git结尾
-                    if (urlEnd > urlStart + 10) {
+                    if (urlEnd > urlStart + 0x0A) {
                         try {
                             const fullStr = new TextDecoder().decode(data.slice(urlStart, urlEnd));
                             const gitMatch = fullStr.match(/(https?:\/\/[^\/\s]+\/[^\/\s]+\/[^\s]+\.git)/);
@@ -942,26 +944,26 @@
             
             // 通用方法：字节级搜索独立的Git URL模式 (https://xxx/xxx/openpilot.git)
             const decoder = new TextDecoder('utf-8', { fatal: false });
-            for (let i = 0; i < data.length - 20; i++) {
+            for (let i = 0; i < data.length - 0x14; i++) {
                 try {
                     // 查找 "http" 字节序列: 104, 116, 116, 112
                     if (data[i] === 104 && data[i+1] === 116 && data[i+2] === 116 && data[i+3] === 112) {
                         let end = i;
                         // 查找URL结束位置
-                        while (end < data.length && end < i + 200 && 
+                        while (end < data.length && end < i + 0xC8 && 
                                data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
                             end++;
                         }
                         
-                        if (end > i + 10) {
+                        if (end > i + 0x0A) {
                             const str = decoder.decode(data.slice(i, end));
                             // 检查是否是openpilot Git URL
                             if (str.includes('openpilot.git')) {
                                 const endIndex = i + str.length - 1;
                                 debugLog('字节级搜索找到Git URL', {
                                     url: str,
-                                    startPosition: i,
-                                    endPosition: endIndex,
+                                    startPosition: `0x${i.toString(16).toUpperCase()}`,
+                                    endPosition: `0x${endIndex.toString(16).toUpperCase()}`,
                                     hexStartAddress: `0x${i.toString(16).toUpperCase()}`,
                                     hexEndAddress: `0x${endIndex.toString(16).toUpperCase()}`,
                                     range: `0x${i.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
@@ -1004,7 +1006,7 @@
                             const endIndex = index + commandBytes.length - 1;
                             debugLog('AGNOS找到git命令', { 
                                 command, 
-                                position: index,
+                                position: `0x${index.toString(16).toUpperCase()}`,
                                 hexAddress: `0x${index.toString(16).toUpperCase()}`,
                                 range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
                                 size: commandBytes.length
@@ -1015,7 +1017,7 @@
                         let end = start;
                         
                         // 查找分支名结束位置
-                        while (end < data.length && end < start + 50 && 
+                        while (end < data.length && end < start + 0x32 && 
                                data[end] !== 0 && data[end] !== 32 && data[end] !== 10 && data[end] !== 13 &&
                                data[end] >= 32 && data[end] <= 126) {
                             end++;
@@ -1042,7 +1044,7 @@
                     const endIndex = index + commandBytes.length - 1;
                     debugLog('备用方案找到git命令', { 
                         command, 
-                        position: index,
+                        position: `0x${index.toString(16).toUpperCase()}`,
                         hexAddress: `0x${index.toString(16).toUpperCase()}`,
                         range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
                         size: commandBytes.length
@@ -1053,7 +1055,7 @@
                     let end = start;
                     
                     // 查找分支名结束位置
-                    while (end < data.length && end < start + 30 && 
+                    while (end < data.length && end < start + 0x1E && 
                            data[end] !== 0 && data[end] !== 10 && data[end] !== 13 && data[end] >= 32) {
                         end++;
                     }
@@ -1093,12 +1095,12 @@
                 
                 // 找到git clone命令，查找整行命令
                 let lineEnd = cloneIndex;
-                while (lineEnd < data.length && lineEnd < cloneIndex + 500 && 
+                while (lineEnd < data.length && lineEnd < cloneIndex + 0x1F4 && 
                        data[lineEnd] !== 0 && data[lineEnd] !== 10 && data[lineEnd] !== 13) {
                     lineEnd++;
                 }
                 
-                if (lineEnd > cloneIndex + 20) {
+                                        if (lineEnd > cloneIndex + 0x14) {
                     const cmdLine = decoder.decode(data.slice(cloneIndex, lineEnd));
                     debugLog('git clone命令行', cmdLine);
                     
@@ -1136,7 +1138,7 @@
             if (index !== -1) {
                 const endIndex = index + installingBytes.length - 1;
                 debugLog('找到Installing字节位置', { 
-                    position: index,
+                    position: `0x${index.toString(16).toUpperCase()}`,
                     hexAddress: `0x${index.toString(16).toUpperCase()}`,
                     range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
                     size: installingBytes.length
@@ -1147,7 +1149,7 @@
                 let end = start + installingBytes.length;
                 
                 // 查找加载信息结束位置（到null字节或不可打印字符）
-                while (end < data.length && end < start + 100 && 
+                                        while (end < data.length && end < start + 0x64 && 
                        data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
                     end++;
                 }
@@ -1158,8 +1160,8 @@
                         const loadingMsg = decoder.decode(data.slice(start, end));
                         debugLog('字节级搜索找到Loading消息', {
                             message: loadingMsg,
-                            startPosition: start,
-                            endPosition: end,
+                            startPosition: `0x${start.toString(16).toUpperCase()}`,
+                            endPosition: `0x${end.toString(16).toUpperCase()}`,
                             hexStartAddress: `0x${start.toString(16).toUpperCase()}`,
                             hexEndAddress: `0x${end.toString(16).toUpperCase()}`,
                             range: `0x${start.toString(16).toUpperCase()}-0x${end.toString(16).toUpperCase()}`,
@@ -1174,12 +1176,12 @@
             
             // 备用方案：字符串搜索
             try {
-                const searchLength = Math.min(data.length, 10000);
+                const searchLength = Math.min(data.length, 0x2710);
                 const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, searchLength));
                 
                 if (dataStr.includes('Installing')) {
                     const installingIndex = dataStr.indexOf('Installing');
-                    const context = dataStr.substring(installingIndex, installingIndex + 50);
+                    const context = dataStr.substring(installingIndex, installingIndex + 0x32);
                     debugLog('备用方案找到Installing上下文', context);
                     
                     // 提取Installing后的内容
@@ -1222,7 +1224,7 @@
                 const fileInfo = document.getElementById('fileInfo');
                 fileInfo.innerHTML = `
                     <strong>文件名:</strong> ${currentFile.name}<br>
-                    <strong>大小:</strong> ${(currentFile.size / 1024 / 1024).toFixed(2)} MB<br>
+                    <strong>大小:</strong> ${(currentFile.size / 0x400 / 0x400).toFixed(2)} MB<br>
                     <strong>类型:</strong> ❓ 无法确定（建议检查文件是否正确）<br>
                     <strong>状态:</strong> ⚠️ 文件类型识别失败，可能影响后续操作
                 `;
@@ -1246,7 +1248,7 @@
             const fileInfo = document.getElementById('fileInfo');
             fileInfo.innerHTML = `
                 <strong>文件名:</strong> ${currentFile.name}<br>
-                <strong>大小:</strong> ${(currentFile.size / 1024 / 1024).toFixed(2)} MB<br>
+                <strong>大小:</strong> ${(currentFile.size / 0x400 / 0x400).toFixed(2)} MB<br>
                 <strong>类型:</strong> ${isNeos ? 'NEOS (Android)' : 'AGNOS (Ubuntu)'}<br>
                 <strong>当前Git主机:</strong> ${currentStrings.host || '未检测到'}<br>
                 <strong>当前用户名:</strong> ${currentStrings.username || '未检测到'}<br>
@@ -1285,7 +1287,7 @@
             }
         }
 
-        function generateInstaller() {
+        async function generateInstaller() {
             if (!fileData) {
                 alert('请先选择安装器文件');
                 return;
@@ -1311,7 +1313,7 @@
 
 
             // 检查用户输入长度（不包含Installing前缀）
-            const maxLoadingLength = 38; // 不包含Installing前缀的Loading消息最大长度
+            const maxLoadingLength = 0x27; // 不包含Installing前缀的Loading消息最大长度 (39)
             const userInputLength = loadingMsg.length;
             
             if (userInputLength > maxLoadingLength) {
@@ -1352,7 +1354,7 @@
                 debugLog('创建数据副本', `大小: ${modifiedData.length} 字节`);
                 
                 // 执行字符串替换
-                const result = modifyBinary(modifiedData, host, username, branch, loadingMsg, isNeos);
+                const result = await modifyBinary(modifiedData, host, username, branch, loadingMsg, isNeos);
                 debugLog('修改结果', result);
                 
                 // 生成更有意义的文件名，基于安装信息
@@ -1377,7 +1379,7 @@
                     `\n\n⚠️ 注意: ${truncationWarnings.join(', ')}` : '';
                 
                 const systemType = currentIsNeos ? 'NEOS' : 'AGNOS';
-                const maxLoadingLength = 38; // 不包含Installing前缀的Loading消息最大长度
+                const maxLoadingLength = 0x27; // 不包含Installing前缀的Loading消息最大长度 (39)
                 const successMsg = `✅ 自定义安装器生成成功！(${systemType}系统)
 
 HOST替换: ${result.hostResult ? '✅' : '⚠️ 可能截断'}
@@ -1394,7 +1396,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             }
         }
 
-        function modifyBinary(data, host, username, branch, loadingMsg, isNeos) {
+        async function modifyBinary(data, host, username, branch, loadingMsg, isNeos) {
             debugLog('开始修改二进制文件', {
                 host, username, branch, loadingMsg, 
                 isNeos, fileSize: data.length
@@ -1443,13 +1445,13 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                         loadingMsg = 'Installing ' + loadingMsg;
                     }
                     
-                    if (isNeos) {
-                        // NEOS: 只替换Installing后面的部分
-                        loadingResult = replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
-                    } else {
-                        // AGNOS: 只替换Installing后面的部分
-                        loadingResult = replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
-                    }
+                                    if (isNeos) {
+                    // NEOS: 只替换Installing后面的部分
+                    loadingResult = await replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
+                } else {
+                    // AGNOS: 只替换Installing后面的部分
+                    loadingResult = await replaceLoadingMessagePartial(data, currentLoadingMsg, loadingMsg, isNeos);
+                }
                 } else {
                     debugLog('Loading消息未变化或未找到', '跳过Loading替换');
                     loadingResult = true; // 未变化视为成功
@@ -1475,7 +1477,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
         }
 
         // 新的Loading消息替换函数：只替换Installing后面的部分，保持Installing前缀不变
-        function replaceLoadingMessagePartial(data, oldStr, newStr, isNeos) {
+        async function replaceLoadingMessagePartial(data, oldStr, newStr, isNeos) {
             try {
                 debugLog('开始部分替换Loading消息', { oldStr, newStr, isNeos });
                 
@@ -1498,23 +1500,19 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                     return true;
                 }
                 
-                // 查找Installing前缀的位置
-                const prefixBytes = new TextEncoder().encode(PREDEFINED_PREFIX);
-                const prefixPos = findBytesPattern(data, prefixBytes);
+                // 智能策略选择：根据文件特征选择最佳替换策略（异步）
+                const strategyResult = await selectOptimalReplacementStrategy(data, oldSuffix, newSuffix, isNeos);
                 
-                if (prefixPos === -1) {
-                    debugLog('未找到Installing前缀', '无法进行部分替换');
-                    return false;
-                }
-                
-                // 计算后缀开始位置
-                const suffixStartPos = prefixPos + prefixBytes.length;
-                
-                // 根据系统类型使用不同的替换策略
-                if (isNeos) {
-                    return replaceSuffixInNeos(data, suffixStartPos, oldSuffix, newSuffix);
+                if (strategyResult.success) {
+                    debugLog('智能策略选择成功', {
+                        method: strategyResult.method,
+                        confidence: strategyResult.confidence,
+                        details: strategyResult.details
+                    });
+                    return true;
                 } else {
-                    return replaceSuffixInAgnos(data, suffixStartPos, oldSuffix, newSuffix);
+                    debugLog('智能策略选择失败', strategyResult.reason);
+                    return false;
                 }
                 
             } catch (e) {
@@ -1523,18 +1521,423 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             }
         }
 
-        // NEOS系统：替换Loading消息后缀部分
-        function replaceSuffixInNeos(data, suffixStartPos, oldSuffix, newSuffix) {
+        // 智能策略选择器：根据文件特征自动选择最佳替换策略
+        async function selectOptimalReplacementStrategy(data, oldSuffix, newSuffix, isNeos) {
             try {
-                debugLog('NEOS后缀替换开始', { oldSuffix, newSuffix, suffixStartPos });
+                debugLog('开始智能策略选择', { isNeos, oldSuffix, newSuffix });
+                
+
+                
+                // 分析文件特征
+                updateStrategyProgress('📊 分析文件特征...');
+                const fileFeatures = analyzeFileFeatures(data, isNeos);
+                debugLog('文件特征分析结果', fileFeatures);
+                updateStrategyProgress('✅ 文件特征分析完成');
+                
+                // 根据特征选择策略优先级
+                updateStrategyProgress('🎯 生成策略优先级...');
+                const strategies = generateStrategyPriority(fileFeatures, isNeos);
+                debugLog('策略优先级', strategies);
+                updateStrategyProgress('✅ 策略优先级生成完成');
+                
+                // 按优先级尝试策略
+                for (let i = 0; i < strategies.length; i++) {
+                    const strategy = strategies[i];
+                    updateStrategyProgress(`🔄 尝试策略: ${strategy.name}`);
+                    
+                    let result;
+                    switch (strategy.name) {
+                        case 'agnos_dual_verification':
+                            result = tryAgnosDualVerification(data, oldSuffix, newSuffix);
+                            break;
+                        case 'fixed_address':
+                            result = tryFixedAddressReplacement(data, oldSuffix, newSuffix);
+                            break;
+                        case 'byte_search':
+                            result = tryByteSearchFallback(data, oldSuffix, newSuffix);
+                            break;
+
+
+                        default:
+                            continue;
+                    }
+                    
+                    if (result.success) {
+                        updateStrategyProgress(`✅ 策略执行成功！`);
+                        
+
+                        
+                        return {
+                            success: true,
+                            method: strategy.name,
+                            confidence: strategy.confidence,
+                            details: result,
+                            reason: '策略执行成功'
+                        };
+                    } else {
+                        // 检查是否需要用户确认（AGNOS双重验证的特殊情况）
+                        if (result.requiresUserConfirmation && result.method === 'dual_verification') {
+                            updateStrategyProgress(`⚠️ 需要用户确认`);
+                            
+                            // 显示用户确认对话框（异步等待用户选择）
+                            const userChoice = await showAddressConfirmationDialog(result);
+                            if (userChoice === 'byte_search') {
+                                // 用户选择使用字节搜索位置
+                                updateStrategyProgress('✅ 用户选择使用字节搜索位置');
+                                const finalResult = executeByteSearchReplacement(data, oldSuffix, newSuffix, result.byteSearchResult);
+                                
+                                if (finalResult.success) {
+                                    updateStrategyProgress('✅ 字节搜索替换执行成功！');
+                                    return finalResult;
+                                } else {
+                                    updateStrategyProgress('❌ 字节搜索替换执行失败', finalResult.reason);
+                                }
+                            } else if (userChoice === 'fixed_address') {
+                                // 用户选择使用固定地址
+                                updateStrategyProgress('✅ 用户选择使用固定地址');
+                                const finalResult = executeFixedAddressReplacement(
+                                    data, oldSuffix, newSuffix, 
+                                    result.fixedAddress.start, result.fixedAddress.end, 39
+                                );
+                                
+                                if (finalResult.success) {
+                                    updateStrategyProgress('✅ 固定地址替换执行成功！');
+                                    return finalResult;
+                                } else {
+                                    updateStrategyProgress('❌ 固定地址替换执行失败');
+                                }
+                            } else {
+                                // 用户取消
+                                updateStrategyProgress('❌ 用户取消操作');
+                                return {
+                                    success: false,
+                                    method: 'user_cancelled',
+                                    confidence: 'none',
+                                    reason: '用户取消操作'
+                                };
+                            }
+                        }
+                        
+                        updateStrategyProgress(`❌ 策略失败`);
+                        debugLog(`策略 ${strategy.name} 失败`, result.reason);
+                    }
+                }
+                
+                // 所有策略都失败了
+                updateStrategyProgress('💥 所有策略都失败了');
+                
+                const finalResult = {
+                    success: false,
+                    method: 'all_strategies_failed',
+                    confidence: 'none',
+                    reason: '所有策略都失败了'
+                };
+                
+                return finalResult;
+                
+            } catch (e) {
+                debugLog('智能策略选择异常', e.message);
+                updateStrategyProgress(`💥 策略选择异常`);
+                
+                const errorResult = {
+                    success: false,
+                    method: 'strategy_selection_error',
+                    confidence: 'none',
+                    reason: '策略选择异常: ' + e.message
+                };
+                
+                return errorResult;
+            }
+        }
+
+
+
+        // 更新策略执行进度（只记录日志，不显示进度）
+        function updateStrategyProgress(message, data = null) {
+            // 只记录到调试日志，不显示进度
+            debugLog(message, data);
+        }
+
+
+
+        // 分析文件特征
+        function analyzeFileFeatures(data, isNeos) {
+            const features = {
+                fileSize: data.length,
+                hasInstallingPrefix: false,
+                prefixPosition: -1,
+                suffixPosition: -1,
+                availableSpace: 0,
+                structureComplexity: 'unknown',
+                versionCompatibility: 'unknown'
+            };
+            
+            try {
+                // 查找Installing前缀
+                const prefixBytes = new TextEncoder().encode('Installing ');
+                const prefixPos = findBytesPattern(data, prefixBytes);
+                features.hasInstallingPrefix = prefixPos !== -1;
+                features.prefixPosition = prefixPos !== -1 ? `0x${prefixPos.toString(16).toUpperCase()}` : -1;
+                
+                // 分析文件结构复杂度
+                if (isNeos) {
+                    // NEOS特征分析
+                    features.structureComplexity = analyzeNeosStructure(data);
+                } else {
+                    // AGNOS特征分析
+                    features.structureComplexity = analyzeAgnosStructure(data);
+                }
+                
+                // 版本兼容性检测
+                features.versionCompatibility = detectVersionCompatibility(data, isNeos);
+                
+            } catch (e) {
+                debugLog('文件特征分析异常', e.message);
+            }
+            
+            return features;
+        }
+
+        // 分析NEOS文件结构
+        function analyzeNeosStructure(data) {
+            try {
+                // 检测NEOS特有的结构特征
+                const neosIndicators = [
+                    '__android_log',
+                    '/system/bin/linker',
+                    'dalvik',
+                    'JNI_'
+                ];
+                
+                let neosScore = 0;
+                const searchLength = Math.min(data.length, 0x2710);
+                const dataStr = new TextDecoder('utf-8', { fatal: false }).decode(data.slice(0, searchLength));
+                
+                for (const indicator of neosIndicators) {
+                    if (dataStr.includes(indicator)) {
+                        neosScore++;
+                    }
+                }
+                
+                if (neosScore >= 3) return 'high_neos';
+                if (neosScore >= 2) return 'medium_neos';
+                if (neosScore >= 1) return 'low_neos';
+                return 'unknown';
+                
+            } catch (e) {
+                return 'unknown';
+            }
+        }
+
+        // 分析AGNOS文件结构
+        function analyzeAgnosStructure(data) {
+            try {
+                // 检测AGNOS特有的结构特征
+                const agnosIndicators = [
+                    'libQt',
+                    '/lib/ld-linux',
+                    'libstdc++',
+                    'libgcc_s'
+                ];
+                
+                let agnosScore = 0;
+                const searchLength = Math.min(data.length, 0x2710);
+                const dataStr = new TextDecoder('utf-8', { fatal: false }).decode(data.slice(0, searchLength));
+                
+                for (const indicator of agnosIndicators) {
+                    if (dataStr.includes(indicator)) {
+                        agnosScore++;
+                    }
+                }
+                
+                if (agnosScore >= 3) return 'high_agnos';
+                if (agnosScore >= 2) return 'medium_agnos';
+                if (agnosScore >= 1) return 'low_agnos';
+                return 'unknown';
+                
+            } catch (e) {
+                return 'unknown';
+            }
+        }
+
+        // 检测版本兼容性
+        function detectVersionCompatibility(data, isNeos) {
+            try {
+                // 基于文件大小和结构特征判断版本兼容性
+                const fileSize = data.length;
+                
+                if (isNeos) {
+                                    if (fileSize > 0x0A * 0x400 * 0x400) return 'modern_neos'; // >10MB
+                if (fileSize > 0x05 * 0x400 * 0x400) return 'standard_neos'; // 5-10MB
+                return 'legacy_neos'; // <5MB
+            } else {
+                if (fileSize > 0x0F * 0x400 * 0x400) return 'modern_agnos'; // >15MB
+                if (fileSize > 0x08 * 0x400 * 0x400) return 'standard_agnos'; // 8-15MB
+                return 'legacy_agnos'; // <8MB
+                }
+                
+            } catch (e) {
+                return 'unknown';
+            }
+        }
+
+        // 生成策略优先级
+        function generateStrategyPriority(features, isNeos) {
+            const strategies = [];
+            
+            if (isNeos) {
+                // NEOS策略优先级
+                strategies.push(
+                    { name: 'byte_search', priority: 1, confidence: 'high' }
+                );
+            } else {
+                // AGNOS策略优先级：使用双重验证
+                strategies.push(
+                    { name: 'agnos_dual_verification', priority: 1, confidence: 'high' }
+                );
+            }
+            
+            // 按优先级排序
+            strategies.sort((a, b) => a.priority - b.priority);
+            
+            return strategies;
+        }
+
+        // ========== AGNOS策略实现 ==========
+
+        // AGNOS策略：双重验证（固定地址 + 字节搜索验证）
+        function tryAgnosDualVerification(data, oldSuffix, newSuffix) {
+            try {
+                // AGNOS固定地址范围
+                const LOADING_START_ADDR = 0x0001B116;  // 安装信息开始地址
+                const LOADING_END_ADDR = 0x0001B13D;    // 安装信息结束地址
+                const LOADING_MAX_LENGTH = 0x27;           // 不包含Installing的Loading消息最大长度 (39)
+                
+                debugLog('开始AGNOS双重验证', { 
+                    fixedStartAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
+                    fixedEndAddr: '0x' + LOADING_END_ADDR.toString(16).toUpperCase(),
+                    maxLength: LOADING_MAX_LENGTH
+                });
+                
+                // 检查地址范围有效性
+                if (LOADING_START_ADDR >= data.length || LOADING_END_ADDR >= data.length) {
+                    debugLog('AGNOS固定地址范围无效', {
+                        startAddr: LOADING_START_ADDR,
+                        endAddr: LOADING_END_ADDR,
+                        dataLength: data.length
+                    });
+                    return {
+                        success: false,
+                        method: 'dual_verification',
+                        reason: '固定地址范围无效'
+                    };
+                }
+                
+                // 检查新后缀长度
+                if (newSuffix.length > LOADING_MAX_LENGTH) {
+                    debugLog('AGNOS Loading消息后缀超长', { 
+                        newSuffix, 
+                        newLength: newSuffix.length, 
+                        maxLength: LOADING_MAX_LENGTH 
+                    });
+                    return {
+                        success: false,
+                        method: 'dual_verification',
+                        reason: '后缀超长'
+                    };
+                }
+                
+                // 策略1：字节搜索定位
+                updateStrategyProgress('🔍 执行字节搜索定位...');
+                const byteSearchResult = performByteSearchForAgnos(data, oldSuffix);
+                
+                if (!byteSearchResult.success) {
+                    debugLog('字节搜索失败，使用固定地址', byteSearchResult.reason);
+                    updateStrategyProgress('⚠️ 字节搜索失败，回退到固定地址', {
+                        reason: byteSearchResult.reason,
+                        fallback: 'fixed_address'
+                    });
+                    
+                    // 回退到固定地址替换
+                    return executeFixedAddressReplacement(data, oldSuffix, newSuffix, LOADING_START_ADDR, LOADING_END_ADDR, LOADING_MAX_LENGTH);
+                }
+                
+                // 策略2：地址一致性验证
+                updateStrategyProgress('✅ 字节搜索成功，开始地址一致性验证...');
+                const addressConsistency = verifyAddressConsistency(
+                    byteSearchResult.position, 
+                    LOADING_START_ADDR, 
+                    LOADING_END_ADDR
+                );
+                
+                if (addressConsistency.isConsistent) {
+                    // 地址一致，直接执行替换
+                    updateStrategyProgress('✅ 地址一致性验证通过，执行替换', {
+                        byteSearchPos: byteSearchResult.positionHex,
+                        fixedStartAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
+                        consistency: 'perfect',
+                        addresses: addressConsistency.addresses
+                    });
+                    
+                    return executeByteSearchReplacement(data, oldSuffix, newSuffix, byteSearchResult);
+                    
+                } else {
+                    // 地址不一致，需要用户确认
+                    updateStrategyProgress('⚠️ 地址一致性验证失败，需要用户确认', {
+                        byteSearchPos: byteSearchResult.positionHex,
+                        fixedStartAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
+                        difference: addressConsistency.difference,
+                        recommendation: addressConsistency.recommendation,
+                        addresses: addressConsistency.addresses
+                    });
+                    
+                    return {
+                        success: false,
+                        method: 'dual_verification',
+                        reason: '地址不一致，需要用户确认',
+                        requiresUserConfirmation: true,
+                        byteSearchResult: byteSearchResult,
+                        fixedAddress: {
+                            start: LOADING_START_ADDR,
+                            end: LOADING_END_ADDR
+                        },
+                        addressDifference: addressConsistency.difference,
+                        recommendation: addressConsistency.recommendation,
+                        addresses: addressConsistency.addresses
+                    };
+                }
+                
+            } catch (e) {
+                debugLog('AGNOS双重验证异常', e.message);
+                return {
+                    success: false,
+                    method: 'dual_verification',
+                    reason: '异常: ' + e.message
+                };
+            }
+        }
+
+
+
+
+
+        // ========== NEOS策略实现 ==========
+
+        // NEOS策略1：字节搜索替换（主要策略）
+        function tryByteSearchReplacement(data, oldSuffix, newSuffix) {
+            try {
+                debugLog('NEOS开始字节搜索替换策略');
                 
                 // 查找旧后缀的位置
                 const oldSuffixBytes = new TextEncoder().encode(oldSuffix);
                 const oldSuffixPos = findBytesPattern(data, oldSuffixBytes);
                 
                 if (oldSuffixPos === -1) {
-                    debugLog('NEOS未找到旧后缀', oldSuffix);
-                    return false;
+                    return {
+                        success: false,
+                        method: 'byte_search',
+                        reason: '未找到旧后缀'
+                    };
                 }
                 
                 // 计算可用空间（扫描后续的null字节）
@@ -1548,161 +1951,40 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 }
                 
                 // 执行替换
-                return replaceStringInBinary(data, oldSuffix, newSuffix);
+                const result = replaceStringInBinary(data, oldSuffix, newSuffix, true); // Loading消息
+                
+                return {
+                    success: result,
+                    method: 'byte_search',
+                    reason: result ? '替换成功' : '替换失败',
+                    availableSpace: availableLength,
+                    oldSuffixLength: oldSuffixBytes.length,
+                    newSuffixLength: newSuffix.length,
+                    position: oldSuffixPos,
+                    positionHex: '0x' + oldSuffixPos.toString(16).toUpperCase()
+                };
                 
             } catch (e) {
-                debugLog('NEOS后缀替换异常', e.message);
-                return false;
+                debugLog('NEOS字节搜索替换异常', e.message);
+                return {
+                    success: false,
+                    method: 'byte_search',
+                    reason: '异常: ' + e.message
+                };
             }
         }
 
-        // AGNOS系统：替换Loading消息后缀部分
-        function replaceSuffixInAgnos(data, suffixStartPos, oldSuffix, newSuffix) {
-            try {
-                debugLog('AGNOS后缀替换开始', { oldSuffix, newSuffix, suffixStartPos });
-                
-                // 使用固定的地址范围进行替换
-                const LOADING_START_ADDR = 0x0001B116;  // 安装信息开始地址
-                const LOADING_END_ADDR = 0x0001B13C;    // 安装信息结束地址
-                const LOADING_MAX_LENGTH = 38;           // 不包含Installing的Loading消息最大长度
-                
-                debugLog('使用AGNOS固定地址范围', { 
-                    startAddr: '0x' + LOADING_START_ADDR.toString(16).toUpperCase(),
-                    endAddr: '0x' + LOADING_END_ADDR.toString(16).toUpperCase(),
-                    maxLength: LOADING_MAX_LENGTH
-                });
-                
-                // 检查新后缀长度是否超出限制
-                if (newSuffix.length > LOADING_MAX_LENGTH) {
-                    debugLog('AGNOS Loading消息后缀超长', { 
-                        newSuffix, 
-                        newLength: newSuffix.length, 
-                        maxLength: LOADING_MAX_LENGTH 
-                    });
-                    return false;
-                }
-                
-                // 直接使用固定地址范围进行替换
-                return replaceLoadingMessageAtFixedAddress(data, LOADING_START_ADDR, LOADING_END_ADDR, oldSuffix, newSuffix, LOADING_MAX_LENGTH);
-                
-            } catch (e) {
-                debugLog('AGNOS后缀替换异常', e.message);
-                return false;
-            }
-        }
 
-        // 在固定地址范围替换Loading消息
-        function replaceLoadingMessageAtFixedAddress(data, startAddr, endAddr, oldStr, newStr, maxLength) {
-            try {
-                debugLog('固定地址范围替换开始', { 
-                    startAddr: '0x' + startAddr.toString(16).toUpperCase(),
-                    endAddr: '0x' + endAddr.toString(16).toUpperCase(),
-                    oldStr, newStr, maxLength
-                });
-                
-                // 检查地址范围是否有效
-                if (startAddr >= data.length || endAddr >= data.length || startAddr >= endAddr) {
-                    debugLog('地址范围无效', { 
-                        startAddr, endAddr, dataLength: data.length 
-                    });
-                    return false;
-                }
-                
-                // 计算可用空间
-                const availableSpace = endAddr - startAddr + 1;
-                debugLog('可用空间分析', { availableSpace, maxLength });
-                
-                // 检查新字符串长度
-                if (newStr.length > maxLength) {
-                    debugLog('字符串超长', { 
-                        newStr, newLength: newStr.length, maxLength 
-                    });
-                    return false;
-                }
-                
-                // 将新字符串写入指定地址范围
-                const newBytes = new TextEncoder().encode(newStr);
-                
-                // 写入新内容
-                for (let i = 0; i < newBytes.length; i++) {
-                    data[startAddr + i] = newBytes[i];
-                }
-                
-                // 用空格填充剩余空间
-                for (let i = newBytes.length; i < availableSpace; i++) {
-                    data[startAddr + i] = 0x20; // 空格填充
-                }
-                
-                debugLog('固定地址范围替换完成', { 
-                    newStr, 
-                    writtenBytes: newBytes.length, 
-                    totalSpace: availableSpace 
-                });
-                
-                return true;
-                
-            } catch (e) {
-                debugLog('固定地址范围替换异常', e.message);
-                return false;
-            }
-        }
 
-        // AGNOS专用：替换Loading消息，采用空格填充+最后null的布局
-        function replaceAgnosLoadingMessage(data, oldStr, newStr) {
-            try {
-                const oldBytes = new TextEncoder().encode(oldStr);
-                const pos = findBytesPattern(data, oldBytes);
-                if (pos === -1) {
-                    debugLog('AGNOS Loading查找失败', oldStr);
-                    return false;
-                }
 
-                // 计算可用空间：原消息后连续的空格(0x20)直到一个最终的null(0x00)，将该null包含在内
-                let end = pos + oldBytes.length;
-                while (end < data.length && data[end] === 0x20) {
-                    end++;
-                }
-                if (end < data.length && data[end] === 0x00) {
-                    end++; // 包含最后一个null
-                }
-                const maxLen = end - pos;
-                if (maxLen <= 0) {
-                    debugLog('AGNOS Loading空间异常', { pos, end });
-                    return false;
-                }
 
-                const newBytes = new TextEncoder().encode(newStr);
-                let willTruncate = false;
-                let writeLen = Math.min(newBytes.length, Math.max(0, maxLen - 1)); // 预留最后一个null
-                if (newBytes.length > maxLen - 1) {
-                    willTruncate = true;
-                }
+        // ========== 通用辅助函数 ==========
 
-                // 写入新消息
-                for (let i = 0; i < writeLen; i++) {
-                    data[pos + i] = newBytes[i];
-                }
-                // 用空格填充直到最后一个字节
-                for (let i = pos + writeLen; i < pos + maxLen - 1; i++) {
-                    data[i] = 0x20;
-                }
-                // 最后一个字节置null
-                data[pos + maxLen - 1] = 0x00;
 
-                if (willTruncate) {
-                    const truncated = new TextDecoder().decode(newBytes.slice(0, writeLen));
-                    debugLog('AGNOS Loading发生截断', { original: newStr, truncated, maxLen });
-                } else {
-                    debugLog('AGNOS Loading替换完成', { newStr, maxLen });
-                }
-                return true;
-            } catch (e) {
-                debugLog('AGNOS Loading替换异常', e.message);
-                return false;
-            }
-        }
 
-        function replaceStringInBinary(data, oldStr, newStr) {
+
+
+        function replaceStringInBinary(data, oldStr, newStr, isLoadingMessage = false) {
             if (!oldStr || !newStr) {
                 debugLog('字符串为空', { oldStr, newStr });
                 return false;
@@ -1718,15 +2000,22 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 return false;
             }
             
-            debugLog('找到字符串位置', { pos, oldLength: oldBytes.length, newLength: newBytes.length });
+            debugLog('找到字符串位置', { pos: `0x${pos.toString(16).toUpperCase()}`, oldLength: oldBytes.length, newLength: newBytes.length });
             
-            // 检查可用空间（扫描后续的null字节）
-            let availableLength = oldBytes.length;
-            for (let i = pos + oldBytes.length; i < data.length; i++) {
-                if (data[i] === 0x00) {
-                    availableLength++;
-                } else {
-                    break;
+            let availableLength;
+            if (isLoadingMessage) {
+                // Loading消息：使用固定地址范围，不计算可用空间
+                availableLength = 39; // 固定39字节
+                debugLog('Loading消息使用固定空间', { availableLength });
+            } else {
+                // 其他字段：动态计算可用空间（扫描后续的null字节）
+                availableLength = oldBytes.length;
+                for (let i = pos + oldBytes.length; i < data.length; i++) {
+                    if (data[i] === 0x00) {
+                        availableLength++;
+                    } else {
+                        break;
+                    }
                 }
             }
             
@@ -1742,14 +2031,14 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 let truncatedBytes = newBytes;
                 
                 // 如果空间不足，尝试智能截断
-                if (availableLength > 10) {
+                if (availableLength > 0x0A) {
                     // 保留一个字节用于null终止符
-                    const maxTextLength = availableLength - 1;
+                    const maxTextLength = availableLength - 0x01;
                     truncatedStr = newStr.substring(0, maxTextLength);
                     
                     // 尝试在单词边界截断
                     const lastSpace = truncatedStr.lastIndexOf(' ');
-                    if (lastSpace > truncatedStr.length * 0.7) {
+                    if (lastSpace > truncatedStr.length * 0x0B / 0x10) {
                         truncatedStr = truncatedStr.substring(0, lastSpace);
                     }
                     
@@ -1772,7 +2061,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                     truncated: truncatedStr,
                     truncatedLength: truncatedStr.length,
                     availableSpace: availableLength,
-                    truncationType: availableLength > 10 ? '智能截断' : '强制截断'
+                    truncationType: availableLength > 0x0A ? '智能截断' : '强制截断'
                 });
                 
                 // 替换数据
@@ -1805,7 +2094,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
         function replaceBranchInBinary(data, oldBranch, newBranch, isNeos) {
             debugLog('开始替换分支', { oldBranch, newBranch, isNeos });
             
-            const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, 10000));
+            const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, 0x2710));
             let success = false;
             
             if (isNeos) {
@@ -1898,7 +2187,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             // 3秒后自动隐藏
             setTimeout(() => {
                 warningDiv.style.display = 'none';
-            }, 3000);
+            }, 0xBB8);
         }
         
         // 创建输入警告元素
@@ -1915,7 +2204,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 padding: 10px 15px;
                 border-radius: 5px;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                z-index: 1000;
+                z-index: 0x3E8;
                 display: none;
                 max-width: 300px;
                 font-size: 14px;
@@ -2021,13 +2310,13 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             const randomTip = tips[Math.floor(Math.random() * tips.length)];
             setTimeout(() => {
                 showSuccess(randomTip);
-            }, 1000);
+            }, 0x3E8);
         });
 
         // 增强功能：文件大小格式化
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
-            const k = 1024;
+            const k = 0x400;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
@@ -2070,6 +2359,296 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             originalAnalyzeFile();
             autoDetectAndSetDefaults();
         };
+
+        // 为AGNOS执行字节搜索定位
+        function performByteSearchForAgnos(data, oldSuffix) {
+            try {
+                // 查找Installing前缀
+                const prefixBytes = new TextEncoder().encode('Installing ');
+                const prefixPos = findBytesPattern(data, prefixBytes);
+                
+                if (prefixPos === -1) {
+                    return {
+                        success: false,
+                        reason: '未找到Installing前缀'
+                    };
+                }
+                
+                // 查找旧后缀
+                const oldSuffixBytes = new TextEncoder().encode(oldSuffix);
+                const oldSuffixPos = findBytesPattern(data, oldSuffixBytes);
+                
+                if (oldSuffixPos === -1) {
+                    return {
+                        success: false,
+                        reason: '未找到旧后缀'
+                    };
+                }
+                
+                // 验证位置合理性（后缀应该在前缀之后）
+                if (oldSuffixPos <= prefixPos) {
+                    return {
+                        success: false,
+                        reason: '后缀位置不合理（在前缀之前）'
+                    };
+                }
+                
+                // 判断前缀是否在固定地址范围内
+                const LOADING_START_ADDR = 0x0001B116;
+                const LOADING_END_ADDR = 0x0001B13D;
+                const prefixLocation = (prefixPos >= LOADING_START_ADDR && prefixPos <= LOADING_END_ADDR) ? 'fixed_range' : 'dynamic_range';
+                
+                // 使用固定空间范围，不动态计算
+                const availableLength = 39; // Loading消息固定39字节
+                
+                return {
+                    success: true,
+                    position: oldSuffixPos,
+                    positionHex: '0x' + oldSuffixPos.toString(16).toUpperCase(),
+                    positionHexValue: parseInt(oldSuffixPos.toString(16), 16), // 用于计算的十六进制值
+                    availableSpace: availableLength,
+                    oldSuffixLength: oldSuffixBytes.length,
+                    prefixPosition: `0x${prefixPos.toString(16).toUpperCase()}`,
+                    prefixPositionHex: '0x' + prefixPos.toString(16).toUpperCase(),
+                    distanceFromPrefix: `0x${(oldSuffixPos - prefixPos).toString(16).toUpperCase()}`,
+                    prefixLocation: prefixLocation,
+                    fixedRangeMatch: prefixLocation === 'fixed_range'
+                };
+                
+            } catch (e) {
+                debugLog('AGNOS字节搜索异常', e.message);
+                return {
+                    success: false,
+                    reason: '异常: ' + e.message
+                };
+            }
+        }
+
+        // 验证地址一致性（使用十六进制计算）
+        function verifyAddressConsistency(byteSearchPos, fixedStartAddr, fixedEndAddr) {
+            // 统一转换为十六进制进行计算
+            const byteSearchPosHex = parseInt(byteSearchPos.toString(16), 16);
+            const fixedStartAddrHex = parseInt(fixedStartAddr.toString(16), 16);
+            
+            const difference = Math.abs(byteSearchPosHex - fixedStartAddrHex);
+            const tolerance = 0x0A; // 允许10字节的误差 (0x0A)
+            
+            // 格式化十六进制地址用于显示
+            const byteSearchPosDisplay = '0x' + byteSearchPos.toString(16).toUpperCase();
+            const fixedStartAddrDisplay = '0x' + fixedStartAddr.toString(16).toUpperCase();
+            
+            debugLog('地址一致性验证（十六进制计算）', {
+                byteSearchPos: `0x${byteSearchPos.toString(16).toUpperCase()}`,
+                byteSearchPosHex: `0x${byteSearchPosHex.toString(16).toUpperCase()}`,
+                byteSearchPosDisplay: byteSearchPosDisplay,
+                fixedStartAddr: `0x${fixedStartAddr.toString(16).toUpperCase()}`,
+                fixedStartAddrHex: `0x${fixedStartAddrHex.toString(16).toUpperCase()}`,
+                fixedStartAddrDisplay: fixedStartAddrDisplay,
+                difference: `0x${difference.toString(16).toUpperCase()}`,
+                tolerance: `0x${tolerance.toString(16).toUpperCase()}`
+            });
+            
+            if (difference <= tolerance) {
+                return {
+                    isConsistent: true,
+                    difference: `0x${difference.toString(16).toUpperCase()}`,
+                    recommendation: '地址一致，可以安全替换',
+                    addresses: {
+                        byteSearch: byteSearchPosDisplay,
+                        fixed: fixedStartAddrDisplay
+                    }
+                };
+            } else if (difference <= 0x32) {
+                return {
+                    isConsistent: false,
+                    difference: `0x${difference.toString(16).toUpperCase()}`,
+                    recommendation: '地址差异较小，建议使用字节搜索位置',
+                    addresses: {
+                        byteSearch: byteSearchPosDisplay,
+                        fixed: fixedStartAddrDisplay
+                    }
+                };
+            } else {
+                return {
+                    isConsistent: false,
+                    difference: `0x${difference.toString(16).toUpperCase()}`,
+                    recommendation: '地址差异较大，建议检查文件版本或使用固定地址',
+                    addresses: {
+                        byteSearch: byteSearchPosDisplay,
+                        fixed: fixedStartAddrDisplay
+                    }
+                };
+            }
+        }
+
+        // 执行固定地址替换
+        function executeFixedAddressReplacement(data, oldSuffix, newSuffix, startAddr, endAddr, maxLength) {
+            const result = replaceLoadingMessageAtFixedAddress(data, startAddr, endAddr, oldSuffix, newSuffix, maxLength);
+            
+            if (result.success) {
+                return {
+                    success: true,
+                    method: 'fixed_address_fallback',
+                    range: '标准AGNOS',
+                    address: `0x${startAddr.toString(16).toUpperCase()}-0x${endAddr.toString(16).toUpperCase()}`,
+                    note: '字节搜索失败，使用固定地址回退'
+                };
+            } else {
+                return {
+                    success: false,
+                    method: 'fixed_address_fallback',
+                    reason: result.reason || '固定地址替换失败'
+                };
+            }
+        }
+
+        // 执行字节搜索替换
+        function executeByteSearchReplacement(data, oldSuffix, newSuffix, byteSearchResult) {
+            const result = replaceStringInBinary(data, oldSuffix, newSuffix, true); // Loading消息
+            
+            if (result) {
+                return {
+                    success: true,
+                    method: 'byte_search_verified',
+                    position: '0x' + byteSearchResult.position.toString(16).toUpperCase(),
+                    availableSpace: byteSearchResult.availableSpace,
+                    note: '地址一致性验证通过，使用字节搜索位置'
+                };
+            } else {
+                return {
+                    success: false,
+                    method: 'byte_search_verified',
+                    reason: '字节搜索替换执行失败'
+                };
+            }
+        }
+
+        // 显示地址确认对话框
+        function showAddressConfirmationDialog(result) {
+            const dialogHtml = `
+                <div id="addressConfirmationDialog" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 0x2710;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 30px;
+                        border-radius: 15px;
+                        max-width: 600px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    ">
+                        <h3 style="color: #e74c3c; margin-bottom: 20px;">⚠️ 地址一致性验证失败</h3>
+                        
+                        <div style="margin-bottom: 20px; padding: 15px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <strong>检测到地址差异：</strong><br>
+                            字节搜索位置: <code>${result.byteSearchResult.positionHex}</code><br>
+                            固定地址范围: <code>0x${result.fixedAddress.start.toString(16).toUpperCase()}-0x${result.fixedAddress.end.toString(16).toUpperCase()}</code><br>
+                            差异大小: <strong>${result.addressDifference} 字节</strong><br>
+                            地址详情: <code>${result.addresses.byteSearch} vs ${result.addresses.fixed}</code>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                            <strong>建议：</strong> ${result.recommendation}
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h4>请选择替换策略：</h4>
+                            <div style="margin: 15px 0;">
+                                <label style="display: block; margin: 10px 0; cursor: pointer;">
+                                    <input type="radio" name="replacementStrategy" value="byte_search" style="margin-right: 10px;">
+                                    <strong>使用字节搜索位置</strong> (${result.byteSearchResult.positionHex})
+                                    <div style="margin-left: 25px; color: #666; font-size: 14px;">
+                                        优点：动态定位，适应性强<br>
+                                        风险：可能定位到错误位置
+                                    </div>
+                                </label>
+                                <label style="display: block; margin: 10px 0; cursor: pointer;">
+                                    <input type="radio" name="replacementStrategy" value="fixed_address" style="margin-right: 10px;">
+                                    <strong>使用固定地址</strong> (0x${result.fixedAddress.start.toString(16).toUpperCase()})
+                                    <div style="margin-left: 25px; color: #666; font-size: 14px;">
+                                        优点：地址固定，可靠性高<br>
+                                        风险：可能不是正确位置
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button id="confirmReplacement" style="
+                                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                                color: white;
+                                padding: 12px 25px;
+                                border: none;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                margin-right: 15px;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                ✅ 确认替换
+                            </button>
+                            <button id="cancelReplacement" style="
+                                background: #6c757d;
+                                color: white;
+                                padding: 12px 25px;
+                                border: none;
+                                border-radius: 8px;
+                                font-size: 16px;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                ❌ 取消操作
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加对话框到页面
+            document.body.insertAdjacentHTML('beforeend', dialogHtml);
+            
+            // 返回Promise以等待用户选择
+            return new Promise((resolve) => {
+                const confirmBtn = document.getElementById('confirmReplacement');
+                const cancelBtn = document.getElementById('cancelReplacement');
+                
+                confirmBtn.addEventListener('click', () => {
+                    const selectedStrategy = document.querySelector('input[name="replacementStrategy"]:checked');
+                    if (selectedStrategy) {
+                        document.getElementById('addressConfirmationDialog').remove();
+                        resolve(selectedStrategy.value);
+                    } else {
+                        alert('请先选择一个替换策略！');
+                    }
+                });
+                
+                cancelBtn.addEventListener('click', () => {
+                    document.getElementById('addressConfirmationDialog').remove();
+                    resolve('cancel');
+                });
+                
+                // 点击背景关闭对话框
+                document.getElementById('addressConfirmationDialog').addEventListener('click', (e) => {
+                    if (e.target.id === 'addressConfirmationDialog') {
+                        document.getElementById('addressConfirmationDialog').remove();
+                        resolve('cancel');
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>
+
