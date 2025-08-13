@@ -263,13 +263,19 @@
             <div class="form-group">
                 <label for="gitHost">Git 主机地址:</label>
                 <input type="text" id="gitHost" placeholder="例如: github.com, gitea.example.com:8080" maxlength="50" oninput="validateHostInput(this)">
-                <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30字符，最多50字符（Git URL总长度限制72字符，固定部分23字符，可用空间49字符，超出时将无法继续输入）</div>
+                <div id="hostHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 30字符，最多50字符（Git URL总长度限制72字符，固定部分8字符，可用空间64字符，超出时将无法继续输入）</div>
             </div>
 
             <div class="form-group">
                 <label for="username">用户名:</label>
                 <input type="text" id="username" placeholder="例如: commaai, your-username" maxlength="30" oninput="validateUsernameInput(this)">
-                <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（Git URL总长度限制72字符，固定部分23字符，可用空间49字符，超出时将无法继续输入）</div>
+                <div id="usernameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（Git URL总长度限制72字符，固定部分8字符，可用空间64字符，超出时将无法继续输入）</div>
+            </div>
+
+            <div class="form-group">
+                <label for="repositoryName">仓库名:</label>
+                <input type="text" id="repositoryName" placeholder="例如: openpilot, my-project" maxlength="30" value="openpilot" oninput="validateRepositoryNameInput(this)">
+                <div id="repositoryNameHint" style="font-size: 0.85em; color: #666; margin-top: 5px;">建议长度 ≤ 20字符，最多30字符（不包含.git后缀，系统会自动添加，Git URL总长度限制72字符）</div>
             </div>
 
             <!-- Git URL预览 -->
@@ -512,17 +518,17 @@
         const GIT_URL_CONFIG = {
             MAX_LENGTH: 72,
             FIXED_PREFIX: 'https://',
-            FIXED_SUFFIX: '/openpilot.git',
-            FIXED_LENGTH: 23 // 'https://' + '/' + '/openpilot.git' (包含host和username之间的斜杠)
+            FIXED_LENGTH: 8 // 'https://' (只包含协议)
         };
 
         // 验证主机地址输入
         function validateHostInput(inputElement) {
             const username = document.getElementById('username').value || 'commaai';
+            const repositoryName = document.getElementById('repositoryName').value || 'openpilot';
             const currentValue = inputElement.value;
             
             // 验证长度
-            if (!validateInputLength(inputElement, currentValue, username, 'host')) {
+            if (!validateInputLength(inputElement, currentValue, username, 'host', repositoryName)) {
                 return;
             }
             
@@ -533,10 +539,11 @@
         // 验证用户名输入
         function validateUsernameInput(inputElement) {
             const host = document.getElementById('gitHost').value || 'github.com';
+            const repositoryName = document.getElementById('repositoryName').value || 'openpilot';
             const currentValue = inputElement.value;
             
             // 验证长度
-            if (!validateInputLength(inputElement, currentValue, host, 'username')) {
+            if (!validateInputLength(inputElement, currentValue, host, 'username', repositoryName)) {
                 return;
             }
             
@@ -544,9 +551,24 @@
             updateGitUrlPreview();
         }
 
+        // 验证仓库名输入
+        function validateRepositoryNameInput(inputElement) {
+            const currentValue = inputElement.value;
+            
+            // 验证仓库名长度（最大30字符）
+            if (currentValue.length > 30) {
+                inputElement.value = currentValue.substring(0, 30);
+                showInputWarning('仓库名已截断到最大长度30字符');
+            }
+            
+            // 更新Git URL预览
+            updateGitUrlPreview();
+        }
+
         // 验证输入长度并阻止超长输入
-        function validateInputLength(inputElement, currentValue, otherValue, fieldType) {
-            const maxLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - otherValue.length;
+        function validateInputLength(inputElement, currentValue, otherValue, fieldType, repositoryName = 'openpilot') {
+            // 计算可用空间：总长度 - 协议(8) - 其他字段长度 - 斜杠(1) - 仓库名长度 - 斜杠(1) - .git(4)
+            const maxLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - otherValue.length - repositoryName.length - 6; // 6 = 2个斜杠 + .git
             
             if (maxLength <= 0) {
                 // 如果无法继续输入，阻止输入
@@ -569,9 +591,11 @@
         function updateGitUrlPreview() {
             const hostInput = document.getElementById('gitHost');
             const usernameInput = document.getElementById('username');
+            const repositoryNameInput = document.getElementById('repositoryName');
             const host = hostInput.value || 'github.com';
             const username = usernameInput.value || 'commaai';
-            const gitUrl = `${GIT_URL_CONFIG.FIXED_PREFIX}${host}/${username}${GIT_URL_CONFIG.FIXED_SUFFIX}`;
+            const repositoryName = repositoryNameInput.value || 'openpilot';
+            const gitUrl = `${GIT_URL_CONFIG.FIXED_PREFIX}${host}/${username}/${repositoryName}.git`;
             const gitUrlLength = gitUrl.length;
             
             // 更新预览内容
@@ -584,14 +608,19 @@
             counter.style.color = status.color;
             
             // 动态计算并设置输入框的最大长度
-            const maxHostLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - username.length;
-            const maxUsernameLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - host.length;
+            // 计算可用空间：总长度 - 协议(8) - 主机长度 - 斜杠(1) - 用户名长度 - 斜杠(1) - 仓库名长度 - .git(4)
+            const maxHostLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - username.length - repositoryName.length - 6; // 6 = 2个斜杠 + .git
+            const maxUsernameLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - host.length - repositoryName.length - 6;
+            const maxRepositoryNameLength = GIT_URL_CONFIG.MAX_LENGTH - GIT_URL_CONFIG.FIXED_LENGTH - host.length - username.length - 6;
             
             // 设置主机地址的最大长度
             hostInput.maxLength = maxHostLength > 0 ? Math.min(50, maxHostLength) : 0;
             
             // 设置用户名的最大长度
             usernameInput.maxLength = maxUsernameLength > 0 ? Math.min(30, maxUsernameLength) : 0;
+            
+            // 设置仓库名的最大长度
+            repositoryNameInput.maxLength = maxRepositoryNameLength > 0 ? Math.min(30, maxRepositoryNameLength) : 0;
             
             // 设置预览区域的样式
             const previewElement = document.getElementById('gitUrlPreview');
@@ -942,7 +971,7 @@
                 }
             }
             
-            // 通用方法：字节级搜索独立的Git URL模式 (https://xxx/xxx/openpilot.git)
+            // 通用方法：字节级搜索独立的Git URL模式 (https://xxx/xxx/任意仓库名.git)
             const decoder = new TextDecoder('utf-8', { fatal: false });
             for (let i = 0; i < data.length - 0x14; i++) {
                 try {
@@ -957,8 +986,8 @@
                         
                         if (end > i + 0x0A) {
                             const str = decoder.decode(data.slice(i, end));
-                            // 检查是否是openpilot Git URL
-                            if (str.includes('openpilot.git')) {
+                            // 检查是否是任何Git URL（支持任意仓库名，不限制为openpilot）
+                            if (str.includes('.git') && (str.includes('https://') || str.includes('http://'))) {
                                 const endIndex = i + str.length - 1;
                                 debugLog('字节级搜索找到Git URL', {
                                     url: str,
@@ -1245,6 +1274,22 @@
             const currentStrings = extractCurrentStrings(fileData, isNeos);
             debugLog('提取到的字符串', currentStrings);
             
+            // 先提取Git URL以获取仓库名
+            let extractedGitUrl = null;
+            let extractedRepoName = 'openpilot';
+            try {
+                extractedGitUrl = extractGitUrl(fileData, isNeos);
+                if (extractedGitUrl) {
+                    const urlMatch = extractedGitUrl.match(/https?:\/\/[^\/]+\/[^\/]+\/([^\/]+\.git)/);
+                    if (urlMatch && urlMatch[1]) {
+                        extractedRepoName = urlMatch[1].replace('.git', '');
+                        debugLog('提取到仓库名', extractedRepoName);
+                    }
+                }
+            } catch (error) {
+                debugLog('提取Git URL失败', error.message);
+            }
+            
             const fileInfo = document.getElementById('fileInfo');
             fileInfo.innerHTML = `
                 <strong>文件名:</strong> ${currentFile.name}<br>
@@ -1252,6 +1297,7 @@
                 <strong>类型:</strong> ${isNeos ? 'NEOS (Android)' : 'AGNOS (Ubuntu)'}<br>
                 <strong>当前Git主机:</strong> ${currentStrings.host || '未检测到'}<br>
                 <strong>当前用户名:</strong> ${currentStrings.username || '未检测到'}<br>
+                <strong>当前仓库名:</strong> ${extractedRepoName}<br>
                 <strong>当前分支:</strong> ${currentStrings.branch || '未检测到'}<br>
                 <strong>当前Loading消息:</strong> ${currentStrings.loading || '未检测到'}<br>
                 <strong>状态:</strong> ✅ 文件加载成功，可以开始编辑
@@ -1261,6 +1307,31 @@
             document.getElementById('gitHost').value = currentStrings.host || 'github.com';
             document.getElementById('username').value = currentStrings.username || 'commaai';
             document.getElementById('branch').value = currentStrings.branch || (currentIsNeos ? 'master' : 'release');
+            
+            // 设置仓库名（使用前面提取的结果）
+            document.getElementById('repositoryName').value = extractedRepoName;
+            
+            // 自动提取并设置仓库名
+            try {
+                const extractedGitUrl = extractGitUrl(fileData, isNeos);
+                if (extractedGitUrl) {
+                    const urlMatch = extractedGitUrl.match(/https?:\/\/[^\/]+\/[^\/]+\/([^\/]+\.git)/);
+                    if (urlMatch && urlMatch[1]) {
+                        const extractedRepoName = urlMatch[1].replace('.git', '');
+                        document.getElementById('repositoryName').value = extractedRepoName;
+                        debugLog('自动提取仓库名', extractedRepoName);
+                    } else {
+                        document.getElementById('repositoryName').value = 'openpilot';
+                        debugLog('使用默认仓库名', 'openpilot');
+                    }
+                } else {
+                    document.getElementById('repositoryName').value = 'openpilot';
+                    debugLog('未找到Git URL，使用默认仓库名', 'openpilot');
+                }
+            } catch (error) {
+                debugLog('自动提取仓库名失败', error.message);
+                document.getElementById('repositoryName').value = 'openpilot';
+            }
             
             // 设置Loading消息，只显示Installing后面的部分
             let loadingValue = 'openpilot';
@@ -1272,13 +1343,16 @@
             // 更新Loading消息计数器
             updateLoadingCounter();
 
-            // 动态设置用户名最大长度（基于Git URL长度限制）
+            // 动态设置用户名最大长度（基于Git URL总长度限制）
             const usernameInput = document.getElementById('username');
             const usernameHint = document.getElementById('usernameHint');
             // 用户名长度受Git URL总长度72字符限制，最多30字符
             usernameInput.maxLength = 30;
             usernameHint.textContent = '最多30字符（Git URL总长度限制72字符）';
             updateBranchCounter();
+            
+            // 更新Git URL预览
+            updateGitUrlPreview();
             
             // 显示自定义安装器配置区域
             const configArea = document.getElementById('installerConfigArea');
@@ -1295,18 +1369,19 @@
 
             const host = document.getElementById('gitHost').value;
             const username = document.getElementById('username').value;
+            const repositoryName = document.getElementById('repositoryName').value;
             const branch = document.getElementById('branch').value;
             let loadingMsg = document.getElementById('loadingMsg').value;
 
-            if (!host || !username || !branch || !loadingMsg) {
+            if (!host || !username || !repositoryName || !branch || !loadingMsg) {
                 alert('请填写所有字段');
                 return;
             }
 
             // 验证Git URL长度限制（最大72字符）
-            const testGitUrl = `https://${host}/${username}/openpilot.git`;
+            const testGitUrl = `https://${host}/${username}/${repositoryName}.git`;
             if (testGitUrl.length > 72) {
-                alert(`⚠️ Git URL长度超限：${testGitUrl.length}/72字符\n\n请缩短主机地址或用户名。\n\n当前Git URL：${testGitUrl}`);
+                alert(`⚠️ Git URL长度超限：${testGitUrl.length}/72字符\n\n请缩短主机地址、用户名或仓库名。\n\n当前Git URL：${testGitUrl}`);
                 return;
             }
 
@@ -1342,7 +1417,7 @@
                 loadingMsg = 'Installing ' + loadingMsg;
             }
 
-            debugLog('开始生成自定义安装器', { host, username, branch, loadingMsg });
+            debugLog('开始生成自定义安装器', { host, username, repositoryName, branch, loadingMsg });
 
             try {
                 // 检测文件类型
@@ -1354,7 +1429,7 @@
                 debugLog('创建数据副本', `大小: ${modifiedData.length} 字节`);
                 
                 // 执行字符串替换
-                const result = await modifyBinary(modifiedData, host, username, branch, loadingMsg, isNeos);
+                const result = await modifyBinary(modifiedData, host, username, repositoryName, branch, loadingMsg, isNeos);
                 debugLog('修改结果', result);
                 
                 // 生成更有意义的文件名，基于安装信息
@@ -1396,9 +1471,9 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             }
         }
 
-        async function modifyBinary(data, host, username, branch, loadingMsg, isNeos) {
+        async function modifyBinary(data, host, username, repositoryName, branch, loadingMsg, isNeos) {
             debugLog('开始修改二进制文件', {
-                host, username, branch, loadingMsg, 
+                host, username, repositoryName, branch, loadingMsg, 
                 isNeos, fileSize: data.length
             });
             
@@ -1408,8 +1483,29 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             let branchResult = false;
             
             try {
-                // 构建新的Git URL
-                const newGitUrl = `https://${host}/${username}/openpilot.git`;
+                // 构建新的Git URL - 优先使用用户输入的仓库名，如果没有则从当前URL提取
+                const currentGitUrl = extractGitUrl(data, isNeos);
+                let finalRepositoryName = repositoryName;
+                
+                // 如果用户没有输入仓库名，尝试从当前URL提取
+                if (!finalRepositoryName || finalRepositoryName.trim() === '') {
+                    if (currentGitUrl) {
+                        // 从当前URL中提取仓库名
+                        const urlMatch = currentGitUrl.match(/https?:\/\/[^\/]+\/[^\/]+\/([^\/]+\.git)/);
+                        if (urlMatch && urlMatch[1]) {
+                            finalRepositoryName = urlMatch[1].replace('.git', '');
+                            debugLog('从当前URL提取仓库名', finalRepositoryName);
+                        } else {
+                            finalRepositoryName = 'openpilot'; // 默认仓库名
+                            debugLog('使用默认仓库名', finalRepositoryName);
+                        }
+                    } else {
+                        finalRepositoryName = 'openpilot'; // 默认仓库名
+                        debugLog('使用默认仓库名', finalRepositoryName);
+                    }
+                }
+                
+                const newGitUrl = `https://${host}/${username}/${finalRepositoryName}.git`;
                 
                 // 验证Git URL长度限制（最大72字符）
                 if (newGitUrl.length > 72) {
@@ -1426,7 +1522,6 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 debugLog('构建新Git URL', { url: newGitUrl, length: newGitUrl.length });
                 
                 // 查找并替换Git URL
-                const currentGitUrl = extractGitUrl(data, isNeos);
                 if (currentGitUrl) {
                     debugLog('找到当前Git URL', currentGitUrl);
                     hostResult = replaceStringInBinary(data, currentGitUrl, newGitUrl);
@@ -2238,6 +2333,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             const preferences = {
                 gitHost: document.getElementById('gitHost').value,
                 username: document.getElementById('username').value,
+                repositoryName: document.getElementById('repositoryName').value,
                 loadingMsg: document.getElementById('loadingMsg').value
             };
             localStorage.setItem('openpilot_preferences', JSON.stringify(preferences));
@@ -2250,6 +2346,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                     const preferences = JSON.parse(saved);
                     if (preferences.gitHost) document.getElementById('gitHost').value = preferences.gitHost;
                     if (preferences.username) document.getElementById('username').value = preferences.username;
+                    if (preferences.repositoryName) document.getElementById('repositoryName').value = preferences.repositoryName;
                     if (preferences.loadingMsg) document.getElementById('loadingMsg').value = preferences.loadingMsg;
                     
                     // 更新相关显示
@@ -2280,7 +2377,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             
             // Enter 键在输入框中时自动跳转
             if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-                const inputs = ['gitHost', 'username', 'branch', 'loadingMsg'];
+                const inputs = ['gitHost', 'username', 'repositoryName', 'branch', 'loadingMsg'];
                 const currentIndex = inputs.indexOf(e.target.id);
                 if (currentIndex !== -1 && currentIndex < inputs.length - 1) {
                     document.getElementById(inputs[currentIndex + 1]).focus();
@@ -2297,6 +2394,9 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             if (configArea) {
                 configArea.style.display = 'none';
             }
+            
+            // 初始化Git URL预览
+            updateGitUrlPreview();
             
             // 添加使用提示
             const tips = [
@@ -2349,6 +2449,26 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 if (!loadingInput.value) {
                     loadingInput.value = currentIsNeos ? 'Comma Two' : 'Comma Three';
                     updateLoadingCounter();
+                }
+                
+                // 自动提取并设置仓库名
+                const repositoryNameInput = document.getElementById('repositoryName');
+                if (!repositoryNameInput.value && fileData) {
+                    try {
+                        const extractedGitUrl = extractGitUrl(fileData, currentIsNeos);
+                        if (extractedGitUrl) {
+                            const urlMatch = extractedGitUrl.match(/https?:\/\/[^\/]+\/[^\/]+\/([^\/]+\.git)/);
+                            if (urlMatch && urlMatch[1]) {
+                                const extractedRepoName = urlMatch[1].replace('.git', '');
+                                repositoryNameInput.value = extractedRepoName;
+                                debugLog('自动提取仓库名', extractedRepoName);
+                                // 更新Git URL预览
+                                updateGitUrlPreview();
+                            }
+                        }
+                    } catch (error) {
+                        debugLog('自动提取仓库名失败', error.message);
+                    }
                 }
             }
         }
