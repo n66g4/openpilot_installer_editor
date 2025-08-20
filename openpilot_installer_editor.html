@@ -486,7 +486,7 @@
             const counter = document.getElementById('branchCounter');
             const hint = document.getElementById('branchHint');
             const len = input.value.length;
-            const max = parseInt(input.maxLength || BRANCH_CONFIG.MAX_LENGTH.toString(), 16);
+            const max = parseInt(input.maxLength || BRANCH_CONFIG.MAX_LENGTH.toString(), 10); // 修复：使用十进制解析
             
             counter.textContent = `(${len}/${max})`;
             
@@ -495,7 +495,9 @@
             
             // 应用状态样式
             counter.style.color = status.color;
-            hint.style.color = status.color;
+            if (hint) {
+                hint.style.color = status.color;
+            }
             input.style.borderColor = status.borderColor;
         }
 
@@ -1031,15 +1033,15 @@
                 for (const command of gitCommands) {
                     const commandBytes = new TextEncoder().encode(command);
                     const index = findBytesPattern(data, commandBytes);
-                                            if (index !== -1) {
-                            const endIndex = index + commandBytes.length - 1;
-                            debugLog('AGNOS找到git命令', { 
-                                command, 
-                                position: `0x${index.toString(16).toUpperCase()}`,
-                                hexAddress: `0x${index.toString(16).toUpperCase()}`,
-                                range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
-                                size: commandBytes.length
-                            });
+                    if (index !== -1) {
+                        const endIndex = index + commandBytes.length - 1;
+                        debugLog('AGNOS找到git命令', { 
+                            command, 
+                            position: `0x${index.toString(16).toUpperCase()}`,
+                            hexAddress: `0x${index.toString(16).toUpperCase()}`,
+                            range: `0x${index.toString(16).toUpperCase()}-0x${endIndex.toString(16).toUpperCase()}`,
+                            size: commandBytes.length
+                        });
                         
                         // 找到命令，提取后面的分支名
                         const start = index + commandBytes.length;
@@ -1129,7 +1131,7 @@
                     lineEnd++;
                 }
                 
-                                        if (lineEnd > cloneIndex + 0x14) {
+                    if (lineEnd > cloneIndex + 0x14) {
                     const cmdLine = decoder.decode(data.slice(cloneIndex, lineEnd));
                     debugLog('git clone命令行', cmdLine);
                     
@@ -1178,10 +1180,10 @@
                 let end = start + installingBytes.length;
                 
                 // 查找加载信息结束位置（到null字节或不可打印字符）
-                                        while (end < data.length && end < start + 0x64 && 
-                       data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
-                    end++;
-                }
+                        while (end < data.length && end < start + 0x64 && 
+                               data[end] !== 0 && data[end] >= 32 && data[end] <= 126) {
+                            end++;
+                        }
                 
                 if (end > start + installingBytes.length) {
                     try {
@@ -1310,6 +1312,9 @@
             
             // 设置仓库名（使用前面提取的结果）
             document.getElementById('repositoryName').value = extractedRepoName;
+            
+            // 更新分支计数器
+            updateBranchCounter();
             
             // 自动提取并设置仓库名
             try {
@@ -2189,43 +2194,226 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
         function replaceBranchInBinary(data, oldBranch, newBranch, isNeos) {
             debugLog('开始替换分支', { oldBranch, newBranch, isNeos });
             
-            const dataStr = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false }).decode(data.slice(0, 0x2710));
             let success = false;
             
             if (isNeos) {
-                // NEOS: 在git clone命令中替换分支
-                const pattern = `git clone`;
-                const branchPattern = `-b ${oldBranch}`;
-                const newBranchStr = `-b ${newBranch}`;
-                
-                if (dataStr.includes(branchPattern)) {
-                    success = replaceStringInBinary(data, branchPattern, newBranchStr);
-                }
+                // NEOS: 使用字节级搜索查找并替换分支
+                success = replaceBranchInBinaryNeos(data, oldBranch, newBranch);
             } else {
-                // AGNOS: 在git checkout命令中替换分支
-                const checkoutPattern = `git checkout ${oldBranch}`;
-                const newCheckoutStr = `git checkout ${newBranch}`;
-                
-                if (dataStr.includes(checkoutPattern)) {
-                    success = replaceStringInBinary(data, checkoutPattern, newCheckoutStr);
-                }
-                
-                // 也尝试替换git reset命令中的分支
-                const resetPattern = `git reset --hard origin/${oldBranch}`;
-                const newResetStr = `git reset --hard origin/${newBranch}`;
-                
-                if (dataStr.includes(resetPattern)) {
-                    const resetSuccess = replaceStringInBinary(data, resetPattern, newResetStr);
-                    success = success || resetSuccess;
-                }
+                // AGNOS: 使用字节级搜索查找并替换分支
+                success = replaceBranchInBinaryAgnos(data, oldBranch, newBranch);
             }
             
             debugLog('分支替换结果', success ? '成功' : '失败');
             return success;
         }
 
-        function findBytesPattern(data, pattern) {
-            for (let i = 0; i <= data.length - pattern.length; i++) {
+        // NEOS系统的分支替换（字节级搜索）
+        function replaceBranchInBinaryNeos(data, oldBranch, newBranch) {
+            debugLog('NEOS分支替换开始', { oldBranch, newBranch });
+            
+            // 搜索 "git clone" 命令
+            const gitCloneBytes = new TextEncoder().encode('git clone');
+            const gitCloneIndex = findBytesPattern(data, gitCloneBytes);
+            
+            if (gitCloneIndex === -1) {
+                debugLog('NEOS未找到git clone命令');
+                return false;
+            }
+            
+            // 搜索分支参数 "-b branchname"
+            const branchPatternBytes = new TextEncoder().encode(`-b ${oldBranch}`);
+            const branchIndex = findBytesPattern(data, branchPatternBytes);
+            
+            if (branchIndex === -1) {
+                debugLog('NEOS未找到分支参数', { oldBranch });
+                return false;
+            }
+            
+            // 执行替换
+            const newBranchBytes = new TextEncoder().encode(`-b ${newBranch}`);
+            const success = replaceBytesInBinary(data, branchIndex, branchPatternBytes, newBranchBytes);
+            
+            debugLog('NEOS分支替换', { success, oldBranch, newBranch });
+            return success;
+        }
+
+        // AGNOS系统的分支替换（字节级搜索）
+        function replaceBranchInBinaryAgnos(data, oldBranch, newBranch) {
+            debugLog('AGNOS分支替换开始', { oldBranch, newBranch });
+            
+            let success = false;
+            let totalReplacements = 0;
+            
+            // 搜索 "git checkout branchname" 命令
+            const checkoutPatternBytes = new TextEncoder().encode(`git checkout ${oldBranch}`);
+            const checkoutIndex = findBytesPattern(data, checkoutPatternBytes);
+            
+            if (checkoutIndex !== -1) {
+                const newCheckoutBytes = new TextEncoder().encode(`git checkout ${newBranch}`);
+                const checkoutSuccess = replaceBytesInBinary(data, checkoutIndex, checkoutPatternBytes, newCheckoutBytes);
+                success = success || checkoutSuccess;
+                totalReplacements++;
+                debugLog('AGNOS git checkout替换', { success: checkoutSuccess, oldBranch, newBranch, position: `0x${checkoutIndex.toString(16).toUpperCase()}` });
+            }
+            
+            // 搜索 "git reset --hard origin/branchname" 命令
+            const resetPatternBytes = new TextEncoder().encode(`git reset --hard origin/${oldBranch}`);
+            const resetIndex = findBytesPattern(data, resetPatternBytes);
+            
+            if (resetIndex !== -1) {
+                const newResetBytes = new TextEncoder().encode(`git reset --hard origin/${newBranch}`);
+                const resetSuccess = replaceBytesInBinary(data, resetIndex, resetPatternBytes, newResetBytes);
+                success = success || resetSuccess;
+                totalReplacements++;
+                debugLog('AGNOS git reset替换', { success: resetSuccess, oldBranch, newBranch, position: `0x${resetIndex.toString(16).toUpperCase()}` });
+            }
+            
+            // 搜索 "git fetch origin branchname" 命令
+            const fetchPatternBytes = new TextEncoder().encode(`git fetch origin ${oldBranch}`);
+            const fetchIndex = findBytesPattern(data, fetchPatternBytes);
+            
+            if (fetchIndex !== -1) {
+                const newFetchBytes = new TextEncoder().encode(`git fetch origin ${newBranch}`);
+                const fetchSuccess = replaceBytesInBinary(data, fetchIndex, fetchPatternBytes, newFetchBytes);
+                success = success || fetchSuccess;
+                totalReplacements++;
+                debugLog('AGNOS git fetch替换', { success: fetchSuccess, oldBranch, newBranch, position: `0x${fetchIndex.toString(16).toUpperCase()}` });
+            }
+            
+            // 通用分支名搜索：搜索所有独立的分支名（不在git命令中的）
+            const standaloneBranchReplacements = replaceStandaloneBranchNames(data, oldBranch, newBranch);
+            success = success || standaloneBranchReplacements.success;
+            totalReplacements += standaloneBranchReplacements.count;
+            
+            debugLog('AGNOS分支替换完成', { 
+                success, 
+                totalReplacements, 
+                gitCommandReplacements: totalReplacements - standaloneBranchReplacements.count,
+                standaloneReplacements: standaloneBranchReplacements.count
+            });
+            
+            return success;
+        }
+
+        // 搜索并替换独立的分支名（不在git命令中的）
+        function replaceStandaloneBranchNames(data, oldBranch, newBranch) {
+            debugLog('开始搜索独立分支名', { oldBranch, newBranch });
+            
+            let success = false;
+            let count = 0;
+            const oldBranchBytes = new TextEncoder().encode(oldBranch);
+            const newBranchBytes = new TextEncoder().encode(newBranch);
+            
+            // 搜索所有独立的分支名出现
+            let searchIndex = 0;
+            while (true) {
+                const index = findBytesPattern(data, oldBranchBytes, searchIndex);
+                if (index === -1) break;
+                
+                // 检查这个位置是否是独立的分支名（不是git命令的一部分）
+                if (isStandaloneBranchName(data, index, oldBranch)) {
+                    debugLog('找到独立分支名', { 
+                        position: `0x${index.toString(16).toUpperCase()}`,
+                        oldBranch,
+                        newBranch
+                    });
+                    
+                    const replacementSuccess = replaceBytesInBinary(data, index, oldBranchBytes, newBranchBytes);
+                    if (replacementSuccess) {
+                        success = true;
+                        count++;
+                        debugLog('独立分支名替换成功', { 
+                            position: `0x${index.toString(16).toUpperCase()}`,
+                            count
+                        });
+                    }
+                }
+                
+                searchIndex = index + 1;
+            }
+            
+            debugLog('独立分支名搜索完成', { success, count });
+            return { success, count };
+        }
+
+        // 检查指定位置是否是独立的分支名
+        function isStandaloneBranchName(data, index, branchName) {
+            const branchLength = branchName.length;
+            
+            // 检查前后字符，确保不是git命令的一部分
+            const beforeStart = Math.max(0, index - 20);
+            const afterEnd = Math.min(data.length, index + branchLength + 20);
+            
+            try {
+                const beforeBytes = data.slice(beforeStart, index);
+                const afterBytes = data.slice(index + branchLength, afterEnd);
+                
+                const beforeStr = new TextDecoder('utf-8', { fatal: false }).decode(beforeBytes);
+                const afterStr = new TextDecoder('utf-8', { fatal: false }).decode(afterBytes);
+                
+                // 如果前后包含git命令关键词，则不是独立分支名
+                const gitKeywords = ['git checkout', 'git reset', 'git fetch', 'origin/', '-b '];
+                const isGitCommand = gitKeywords.some(keyword => 
+                    beforeStr.includes(keyword) || afterStr.includes(keyword)
+                );
+                
+                // 检查分支名是否被空格、换行符或其他分隔符包围
+                const isStandalone = !isGitCommand && 
+                    (beforeStr.endsWith(' ') || beforeStr.endsWith('\n') || beforeStr.endsWith('\r') || beforeStr.endsWith('\t') || beforeStr.endsWith('\0')) &&
+                    (afterStr.startsWith(' ') || afterStr.startsWith('\n') || afterStr.startsWith('\r') || afterStr.startsWith('\t') || afterStr.startsWith('\0'));
+                
+                debugLog('分支名位置检查', { 
+                    position: `0x${index.toString(16).toUpperCase()}`,
+                    beforeContext: beforeStr.slice(-10),
+                    afterContext: afterStr.slice(0, 10),
+                    isGitCommand,
+                    isStandalone
+                });
+                
+                return isStandalone;
+            } catch (error) {
+                debugLog('分支名位置检查失败', error.message);
+                return false;
+            }
+        }
+
+        // 字节级替换函数
+        function replaceBytesInBinary(data, startIndex, oldBytes, newBytes) {
+            try {
+                // 检查是否有足够的空间
+                if (startIndex + newBytes.length > data.length) {
+                    debugLog('替换空间不足', { startIndex, newBytesLength: newBytes.length, dataLength: data.length });
+                    return false;
+                }
+                
+                // 执行替换
+                for (let i = 0; i < newBytes.length; i++) {
+                    data[startIndex + i] = newBytes[i];
+                }
+                
+                // 如果新字节比旧字节短，用null填充剩余空间
+                if (newBytes.length < oldBytes.length) {
+                    for (let i = newBytes.length; i < oldBytes.length; i++) {
+                        data[startIndex + i] = 0x00;
+                    }
+                }
+                
+                debugLog('字节级替换成功', { 
+                    startIndex: `0x${startIndex.toString(16).toUpperCase()}`,
+                    oldLength: oldBytes.length,
+                    newLength: newBytes.length
+                });
+                
+                return true;
+            } catch (error) {
+                debugLog('字节级替换失败', error.message);
+                return false;
+            }
+        }
+
+        function findBytesPattern(data, pattern, startIndex = 0) {
+            for (let i = startIndex; i <= data.length - pattern.length; i++) {
                 let found = true;
                 for (let j = 0; j < pattern.length; j++) {
                     if (data[i + j] !== pattern[j]) {
@@ -2525,7 +2713,7 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                     success: true,
                     position: oldSuffixPos,
                     positionHex: '0x' + oldSuffixPos.toString(16).toUpperCase(),
-                    positionHexValue: parseInt(oldSuffixPos.toString(16), 16), // 用于计算的十六进制值
+                    positionHexValue: oldSuffixPos, // 直接使用数字值，无需转换
                     availableSpace: availableLength,
                     oldSuffixLength: oldSuffixBytes.length,
                     prefixPosition: `0x${prefixPos.toString(16).toUpperCase()}`,
@@ -2544,25 +2732,22 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
             }
         }
 
-        // 验证地址一致性（使用十六进制计算）
+        // 验证地址一致性（直接使用数字计算）
         function verifyAddressConsistency(byteSearchPos, fixedStartAddr, fixedEndAddr) {
-            // 统一转换为十六进制进行计算
-            const byteSearchPosHex = parseInt(byteSearchPos.toString(16), 16);
-            const fixedStartAddrHex = parseInt(fixedStartAddr.toString(16), 16);
-            
-            const difference = Math.abs(byteSearchPosHex - fixedStartAddrHex);
+            // 直接使用数字进行计算，无需转换
+            const difference = Math.abs(byteSearchPos - fixedStartAddr);
             const tolerance = 0x0A; // 允许10字节的误差 (0x0A)
             
             // 格式化十六进制地址用于显示
             const byteSearchPosDisplay = '0x' + byteSearchPos.toString(16).toUpperCase();
             const fixedStartAddrDisplay = '0x' + fixedStartAddr.toString(16).toUpperCase();
             
-            debugLog('地址一致性验证（十六进制计算）', {
+            debugLog('地址一致性验证（数字计算）', {
                 byteSearchPos: `0x${byteSearchPos.toString(16).toUpperCase()}`,
-                byteSearchPosHex: `0x${byteSearchPosHex.toString(16).toUpperCase()}`,
+                byteSearchPosValue: byteSearchPos,
                 byteSearchPosDisplay: byteSearchPosDisplay,
                 fixedStartAddr: `0x${fixedStartAddr.toString(16).toUpperCase()}`,
-                fixedStartAddrHex: `0x${fixedStartAddrHex.toString(16).toUpperCase()}`,
+                fixedStartAddrValue: fixedStartAddr,
                 fixedStartAddrDisplay: fixedStartAddrDisplay,
                 difference: `0x${difference.toString(16).toUpperCase()}`,
                 tolerance: `0x${tolerance.toString(16).toUpperCase()}`
