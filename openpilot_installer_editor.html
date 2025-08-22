@@ -2168,9 +2168,9 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 for (let i = 0; i < truncatedBytes.length; i++) {
                     data[pos + i] = truncatedBytes[i];
                 }
-                // 填充剩余空间为null
+                // 填充剩余空间：Loading消息用空格，其他用null
                 for (let i = truncatedBytes.length; i < availableLength; i++) {
-                    data[pos + i] = 0x00;
+                    data[pos + i] = isLoadingMessage ? 0x20 : 0x00;
                 }
                 
                 // 返回false表示有截断发生，让用户知道
@@ -2181,9 +2181,9 @@ BRANCH替换: ${result.branchResult ? '✅' : '❌'}${warningText}`;
                 for (let i = 0; i < newBytes.length; i++) {
                     data[pos + i] = newBytes[i];
                 }
-                // 填充剩余空间为null
+                // 填充剩余空间：Loading消息用空格，其他用null
                 for (let i = newBytes.length; i < availableLength; i++) {
-                    data[pos + i] = 0x00;
+                    data[pos + i] = isLoadingMessage ? 0x20 : 0x00;
                 }
             }
             
